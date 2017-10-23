@@ -47,7 +47,7 @@ int main()
 	double second_membre[3];
 	second_membre[0] = 2;
 	second_membre[1] = 2;
-	second_membre[1] = 8;
+	second_membre[2] = 8;
 
 	double x[3];
 	x[0] = 0;
@@ -137,129 +137,101 @@ void afficher_matrice(int n, double **mat)
 
 void gauss(double **A, double *b, double *x, int n)
 {
-	int i, j, k ;
-	int imin ;
-	float p ;
-	float sum, valmin, tump1, tump2 ;
+	int i, j, k;
+	int imin;
+	float p;
+	float sum, valmin, tump1, tump2;
 	
-	for(k = 0 ; k < n-1 ; k++)
+	for (k = 0 ; k < n-1 ; k++)
 	{
 		/* Dans un premier temps, on cherche l'élément minimum (non */
-		/* nul) en valeur absolue dans la colonne k et d'indice i   */
-		/* supérieur ou égal à k.								   */
+		/* nul) en valeur absolue dans la colonne k et d'indice i	*/
+		/* supérieur ou égal à k.									*/
 		
-		valmin = A[k][k] ; imin = k ;
-		for(i = k+1 ; i < n ; i++)
+		valmin = A[k][k]; imin = k;
+		for (i = k+1 ; i < n ; i++)
 		{
-		   if (valmin != 0)
-		   {
-			  if (abs(A[i][k]) < abs(valmin) && A[i][k] != 0)
-			  {
-				 valmin = A[i][k] ;
-				 imin = i ;
-			  }
-		   }
-		   else 
-		   {
-				 valmin = A[i][k] ;
-				 imin = i ;
-		   }	 
+			if (valmin != 0)
+			{
+				if (abs(A[i][k]) < abs(valmin) && A[i][k] != 0)
+				{
+					valmin = A[i][k];
+					imin = i;
+				}
+			}
+			else 
+			{
+				valmin = A[i][k];
+				imin = i;
+			}	 
 		}
 		
 		/* Si l'élément minimum est nul, on peut en déduire */
-		/* que la matrice est singulière. Le pogramme est   */
+		/* que la matrice est singulière. Le pogramme est	*/
 		/* alors interrompu.								*/
 		
 		if (valmin == 0.)
 		{
-		   printf("\n\n\nAttention! Matrice singuliere!\n\n\n") ;
-		   exit( EXIT_FAILURE ) ;
+			printf("\n\n\nAttention! Matrice singuliere!\n\n\n");
+			exit(EXIT_FAILURE);
 		}
 		
 		/* Si la matrice n'est pas singulière, on inverse	*/
-		/* les éléments de la ligne imax avec les éléments   */
+		/* les éléments de la ligne imax avec les éléments	*/
 		/* de la ligne k. On fait de même avec le vecteur b. */
 		
 		for(j = 0 ; j < n ; j++)
 		{
-		   tump1 = A[imin][j] ;
-		   A[imin][j] = A[k][j] ;
-		   A[k][j] = tump1 ;
+			tump1 = A[imin][j];
+			A[imin][j] = A[k][j];
+			A[k][j] = tump1;
 		}
 		
-		tump2 = b[imin] ;
-		b[imin] = b[k] ;
-		b[k] = tump2 ;
+		tump2 = b[imin];
+		b[imin] = b[k];
+		b[k] = tump2;
 		
 		
 		/* On procède à la réduction de la matrice par la */
 		/* méthode d'élimination de Gauss. */
 		
-		for(i = k+1 ; i < n ; i++)
+		for (i = k+1 ; i < n ; i++)
 		{
-		   p = A[i][k]/A[k][k] ;
-		   
-		   for(j = 0 ; j < n ; j++)
-		   {
-			  A[i][j] = A[i][j] - p*A[k][j] ;
-		   }
-		   
-		   b[i] = b[i] - p*b[k] ; 
+			p = A[i][k]/A[k][k];
+			
+			for (j = 0 ; j < n ; j++)
+			{
+				A[i][j] = A[i][j] - p*A[k][j];
+			}
+			
+			b[i] = b[i] - p*b[k]; 
 		}
-	}   
+	}	
 	 
 	/* On vérifie que la matrice n'est toujours pas singulière. */
 	/* Si c'est le cas, on interrompt le programme. */
 	 
 	if (A[n-1][n-1] == 0)
 	{
-		printf("\n\n\nAttention! Matrice singuliere!\n\n\n") ;
-		exit( EXIT_FAILURE ) ; 
+		printf("\n\n\nAttention! Matrice singuliere!\n\n\n");
+		exit(EXIT_FAILURE); 
 	}
 	 
 	/* Une fois le système réduit, on obtient une matrice triangulaire */
 	/* supérieure et la résolution du système se fait très simplement. */
 	 
-	x[n-1] = b[n-1]/A[n-1][n-1] ;
+	x[n-1] = b[n-1]/A[n-1][n-1];
 	 
 	for(i = n-2 ; i > -1 ; i--)
 	{
-		   sum = 0 ;
-		   
-		   for(j = n-1 ; j > i ; j--)
-		   {
-			  sum = sum + A[i][j]*x[j] ;
-		   }
-		   x[i] = (b[i] - sum)/A[i][i] ;
-	}
-
-	/*int i = 0;
-	int j = 0;
-	int k = 0;
-	double premier_coeff = 0;
-
-	for (j = 0 ; j < n-1 ; j++)
-	{
-		for (i = j + 1 ; i < n ; i++)
-		{
-			second_membre[i] = second_membre[i] - (mat[i][j]/mat[j][j]) * second_membre[j];
-			for (k = j + 1 ; k < n ; k++)
+			sum = 0;
+			
+			for(j = n-1 ; j > i ; j--)
 			{
-				mat[i][k] = mat[i][k] - (mat[i][j]/mat[j][j]) * mat[j][k];
+				sum = sum + A[i][j]*x[j];
 			}
-			mat[i][j] = 0;
-		}
+			x[i] = (b[i] - sum)/A[i][i];
 	}
-	
-	for (i = 0 ; i < n ; i++)
-	{
-		premier_coeff = mat[i][i];
-		for (j =  i ; j < n ; j++)
-			{
-				mat[i][j] /= premier_coeff;
-			}
-		second_membre[i] /= premier_coeff;
-	}*/
 }
 
 void jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it)

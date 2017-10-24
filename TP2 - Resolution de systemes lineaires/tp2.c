@@ -11,7 +11,8 @@
 int min(int a, int b);
 double** allouer_memoire_matrice(int n);
 void liberer_memoire_matrice(int n, double **mat);
-void afficher_matrice(int n, double **mat);
+void afficher_matrice(int n, double **mat, double *second_membre);
+void afficher_solutions(int n, double *x);
 
 void gauss(double **A, double *b, double *x, int n);
 void jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it);
@@ -43,13 +44,13 @@ int main()
 	mat[2][1] = 17;
 	mat[2][2] = 19;
 
-	afficher_matrice(3, mat);
-	printf("\n\n");
-
 	double second_membre[3];
 	second_membre[0] = 1;
 	second_membre[1] = 1;
 	second_membre[2] = 1;
+
+	afficher_matrice(3, mat, second_membre);
+	printf("\n\n");
 
 	double x[3];
 	x[0] = 0;
@@ -58,7 +59,7 @@ int main()
 
 	jacobi(mat, second_membre, x, pow(10, -4), 3, 2*3*3);
 
-	afficher_matrice(3, mat);
+	afficher_matrice(3, mat, second_membre);
 	printf("\n\n");
 
 	printf("%f\n", x[0]);
@@ -116,7 +117,7 @@ void liberer_memoire_matrice(int n, double **mat)
 	free(mat);
 }
 
-void afficher_matrice(int n, double **mat)
+void afficher_matrice(int n, double **mat, double *second_membre)
 {
 	int i = 0;
 	int j = 0;
@@ -133,6 +134,12 @@ void afficher_matrice(int n, double **mat)
 				printf(" ");
 			}
 		}
+		nb_caracteres = printf("|");
+		for (x = 0 ; x < 10 - nb_caracteres ; x++)
+		{
+			printf(" ");
+		}
+		nb_caracteres = printf("%f", second_membre[i]);
 		printf("\n");
 	}
 }

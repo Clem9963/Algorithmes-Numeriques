@@ -15,6 +15,8 @@ void afficher_matrice(int n, double **mat);
 
 void gauss(double **A, double *b, double *x, int n);
 void jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it);
+void resyst_tri_inf(double **mat, double *b1, double *x1, int n);
+void resyst_tri_sup(double **mat, double *b1, double *x1, int n);
 
 double** generer_matrice_creuse(int n);
 double** generer_matrice_bord(int n);
@@ -31,30 +33,30 @@ int main()
 
 	mat = generer_matrice_de_moler(3);
 
-	mat[0][0] = 1;
-	mat[0][1] = 2;
-	mat[0][2] = 2;
-	mat[1][0] = 1;
-	mat[1][1] = 3;
-	mat[1][2] = 3;
-	mat[2][0] = 3;
-	mat[2][1] = 7;
-	mat[2][2] = 8;
+	mat[0][0] = 64;
+	mat[0][1] = 40;
+	mat[0][2] = 24;
+	mat[1][0] = 40;
+	mat[1][1] = 29;
+	mat[1][2] = 17;
+	mat[2][0] = 24;
+	mat[2][1] = 17;
+	mat[2][2] = 19;
 
 	afficher_matrice(3, mat);
 	printf("\n\n");
 
 	double second_membre[3];
-	second_membre[0] = 2;
-	second_membre[1] = 2;
-	second_membre[2] = 8;
+	second_membre[0] = 1;
+	second_membre[1] = 1;
+	second_membre[2] = 1;
 
 	double x[3];
 	x[0] = 0;
 	x[1] = 0;
 	x[2] = 0;
 
-	gauss(mat, second_membre, x, 3);
+	jacobi(mat, second_membre, x, pow(10, -4), 3, 2*3*3);
 
 	afficher_matrice(3, mat);
 	printf("\n\n");
@@ -139,8 +141,8 @@ void gauss(double **A, double *b, double *x, int n)
 {
 	int i, j, k;
 	int imin;
-	float p;
-	float sum, valmin, tump1, tump2;
+	double p;
+	double sum, valmin, tump1, tump2;
 	
 	for (k = 0 ; k < n-1 ; k++)
 	{
@@ -241,6 +243,7 @@ void jacobi(double **mat, double *second_membre, double *x, double e, int n, int
 	int compteur = 0;
 	double somme_avant_i = 0;
 	double somme_apres_i = 0;
+	double norme = 0;
 	int converge = FALSE;
 
 	double *y = calloc(n, sizeof(double));
@@ -258,25 +261,52 @@ void jacobi(double **mat, double *second_membre, double *x, double e, int n, int
 				somme_apres_i = somme_apres_i + mat[i][j]*x[j];
 			}
 			y[i] = second_membre[i] - somme_avant_i - somme_apres_i;
-			if (fabs(x[i] - y[i]) < e)
-			{
-				x[i] = y[i];
-				y[i] = 1; 		// On stocke un 1 pour indiquer que la différence entre x[i] et l'ancienne valeur x[i] est inférieure à e
-			}
-			else
-			{
-				x[i] = y[i];
-				y[i] = 0; 		// 0 sinon
-			}
+			norme = norme + pow((x[i] - y[i]), 2);
+			somme_avant_i = 0;
+			somme_apres_i = 0;
 		}
-		converge = TRUE;		// Préparation de converge pour le test
+		norme = sqrt(norme);
+		if (norme < e)
+		{
+			converge = TRUE;
+		}
+		norme = 0;
 		for (i = 0 ; i < n ; i++)
 		{
-			converge = converge && y[i];
+			x[i] = y[i];
 		}
 		compteur++;
 		converge = converge || (compteur > max_it);
 	}
+}
+
+/*****Resolution du systeme lineaire (triangle inferieur)*****/
+void resyst_tri_inf(double **mat, double *b1, double *x1, int n)
+{
+ 	int i,k;
+	double S;
+ 	x1[1]=b1[1]/mat[1][1];
+ 	for(i=2;i<=n;i++)
+ 	{
+		S=0;
+  		for(k=1;k<=i;k++)
+			S+=mat[i][k]*x1[k];
+		x1[i]=(b1[i]-S)/mat[i][i];
+ 	}
+}
+/*****Resolution du systeme lineaire (triangle superieur)*****/
+void resyst_tri_sup(double **mat, double *b1, double *x1, int n)
+{
+ 	int i,k;
+	double S;
+ 	x1[n]=b1[n]/mat[n][n];
+ 	for(i=n-1;i>=1;i--)
+ 	{
+		S=0;
+  		for(k=n;k>=i+2;k--)
+			S+=mat[i][k]*x1[k];
+		x1[i]=(b1[i]-S)/mat[i][i];
+ 	}
 }
 
 double** generer_matrice_creuse(int n)

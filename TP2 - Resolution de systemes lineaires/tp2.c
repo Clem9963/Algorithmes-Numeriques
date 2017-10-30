@@ -18,10 +18,10 @@ void afficher_matrice(int n, double **mat, double *second_membre);
 void afficher_solutions(int n, double *x);
 
 /* Fonctions de résolution de systèmes */
-void gauss(double **A, double *b, double *x, int n);
-void jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it);
-void cholesky(double **mat, double *b, double *x, int n);
-void gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it);
+time_t gauss(double **A, double *b, double *x, int n);
+time_t jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it);
+time_t cholesky(double **mat, double *b, double *x, int n);
+time_t gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it);
 
 /* Fonctions annexes */
 int trouver_decomposition(double **mat, double	**r, double **rt, int n);
@@ -182,7 +182,7 @@ void afficher_matrice(int n, double **mat, double *second_membre)
 	}
 }
 
-void gauss(double **A, double *b, double *x, int n)
+time_t gauss(double **A, double *b, double *x, int n)
 {
 	int i, j, k;
 	int imin;
@@ -281,7 +281,7 @@ void gauss(double **A, double *b, double *x, int n)
 	}
 }
 
-void jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it)
+time_t jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it)
 {
 	int i = 0;
 	int j = 0;
@@ -322,7 +322,7 @@ void jacobi(double **mat, double *second_membre, double *x, double e, int n, int
 	printf("\n\n Il y a eu %d itération(s) pour arriver au résultat\n", compteur);
 }
 
-void cholesky(double **mat, double *b, double *x, int n)
+time_t cholesky(double **mat, double *b, double *x, int n)
 {
 	double *y;
 	double **r;
@@ -347,7 +347,7 @@ void cholesky(double **mat, double *b, double *x, int n)
 	liberer_memoire_matrice(3, rt);
 }
 
-void gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it)
+time_t gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it)
 {
 	int i = 0;
 	int j = 0;

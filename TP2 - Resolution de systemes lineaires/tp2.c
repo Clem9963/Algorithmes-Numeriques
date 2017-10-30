@@ -6,20 +6,28 @@
 #define TRUE 1
 #define FALSE 0
 
+/**************/
 /* PROTOTYPES */
+/**************/
 
+/* Fonctions diverses, allocations, affichages */
 int min(int a, int b);
 double** allouer_memoire_matrice(int n);
 void liberer_memoire_matrice(int n, double **mat);
 void afficher_matrice(int n, double **mat, double *second_membre);
 void afficher_solutions(int n, double *x);
 
+/* Fonctions de résolution de systèmes */
 void gauss(double **A, double *b, double *x, int n);
 void jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it);
+void cholesky(double **mat, double *b, double *x, int n);
+
+/* Fonctions annexes */
 int trouver_decomposition(double **mat, double	**r, double **rt, int n);
 void resyst_tri_inf(double **mat, double *b1, double *x1, int n);
 void resyst_tri_sup(double **mat, double *b1, double *x1, int n);
 
+/* Fonctions de génération de matrices types */
 double** generer_matrice_creuse(int n);
 double** generer_matrice_bord(int n);
 double** generer_matrice_ding_dong(int n);
@@ -32,36 +40,34 @@ double** generer_matrice_de_moler(int n);
 int main()
 {
 	double **mat;
-	double **r;
-	double **rt;
 
 	mat = allouer_memoire_matrice(3);
-	r = allouer_memoire_matrice(3);
-	rt = allouer_memoire_matrice(3);
 
-	mat[0][0] = 1;
-	mat[0][1] = 1;
-	mat[0][2] = 1;
-	mat[1][0] = 1;
-	mat[1][1] = 2;
-	mat[1][2] = 2;
-	mat[2][0] = 1;
-	mat[2][1] = 2;
-	mat[2][2] = 3;
+	mat[0][0] = 64;
+	mat[0][1] = 40;
+	mat[0][2] = 24;
+	mat[1][0] = 40;
+	mat[1][1] = 29;
+	mat[1][2] = 17;
+	mat[2][0] = 24;
+	mat[2][1] = 17;
+	mat[2][2] = 19;
 
 	double second_membre[3];
+	double x[3];
 	second_membre[0] = 1;
 	second_membre[1] = 1;
 	second_membre[2] = 1;
+	x[0] = 0;
+	x[1] = 0;
+	x[2] = 0;
 
 	afficher_matrice(3, mat, second_membre);
 	printf("\n");
 
-	trouver_decomposition(mat, r, rt, 3);
-	afficher_matrice(3, r, second_membre);
-	printf("\n");
+	cholesky(mat, second_membre, x, 3);
 
-	afficher_matrice(3, rt, second_membre);
+	afficher_matrice(3, mat, x);
 	printf("\n");
 
 	return EXIT_SUCCESS;
@@ -285,6 +291,39 @@ void jacobi(double **mat, double *second_membre, double *x, double e, int n, int
 	}
 }
 
+void cholesky(double **mat, double *b, double *x, int n)
+{
+	double *y;
+	double **r;
+	double **rt;
+	r = allouer_memoire_matrice(3);
+	rt = allouer_memoire_matrice(3);
+
+	y = calloc(n, sizeof(double));
+	if (y == NULL)
+	{
+		printf("Une erreur est survenue lors de l'allocation de mémoire\n");
+		exit(EXIT_FAILURE);
+	}
+
+	afficher_matrice(n, mat, y);
+	printf("\n");
+
+	trouver_decomposition(mat, r, rt, 3);
+
+	afficher_matrice(n, r, y);
+	printf("\n");
+	afficher_matrice(n, rt, y);
+	printf("\n");
+
+	resyst_tri_inf(rt, b, y, n);
+	resyst_tri_sup(r, y, x, n);
+
+	free(y);
+	liberer_memoire_matrice(3, r);
+	liberer_memoire_matrice(3, rt);
+}
+
 int trouver_decomposition(double **mat, double	**r, double **rt, int n)
 {
 	int i = 0;
@@ -331,13 +370,13 @@ int trouver_decomposition(double **mat, double	**r, double **rt, int n)
 /*****Resolution du systeme lineaire (triangle inferieur)*****/
 void resyst_tri_inf(double **mat, double *b1, double *x1, int n)
 {
- 	int i,k;
+ 	int i, k;
 	double S;
- 	x1[1] = b1[1] / mat[1][1];
- 	for (i = 2 ; i <= n ; i++)
+ 	x1[0] = b1[0] / mat[0][0];
+ 	for (i = 1 ; i < n ; i++)
  	{
 		S = 0;
-  		for (k = 1 ; k <= i ; k++)
+  		for (k = 0 ; k <= i ; k++)
 			S += mat[i][k] * x1[k];
 		x1[i] = (b1[i]-S) / mat[i][i];
  	}
@@ -348,11 +387,11 @@ void resyst_tri_sup(double **mat, double *b1, double *x1, int n)
 {
  	int i,k;
 	double S;
- 	x1[n] = b1[n] / mat[n][n];
- 	for (i = n-1 ; i>=1 ; i--)
+ 	x1[n-1] = b1[n-1] / mat[n-1][n-1];
+ 	for (i = n-2 ; i >= 0 ; i--)
  	{
 		S = 0;
-  		for (k = n ; k >= i+2 ; k--)
+  		for (k = n-1 ; k >= i+1 ; k--)
 			S += mat[i][k] * x1[k];
 		x1[i] = (b1[i]-S) / mat[i][i];
  	}

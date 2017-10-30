@@ -21,6 +21,7 @@ void afficher_solutions(int n, double *x);
 void gauss(double **A, double *b, double *x, int n);
 void jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it);
 void cholesky(double **mat, double *b, double *x, int n);
+void gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it);
 
 /* Fonctions annexes */
 int trouver_decomposition(double **mat, double	**r, double **rt, int n);
@@ -41,9 +42,21 @@ int main()
 {
 	double **mat;
 
-	mat = allouer_memoire_matrice(4);
+	mat = allouer_memoire_matrice(3);
 
-	mat[0][0] = 4;
+	mat[0][0] = 1;
+	mat[0][1] = 1;
+	mat[0][2] = 1;
+	
+	mat[1][0] = 1;
+	mat[1][1] = 2;
+	mat[1][2] = 2;
+
+	mat[2][0] = 1;
+	mat[2][1] = 2;
+	mat[2][2] = 3;
+
+	/*mat[0][0] = 4;
 	mat[0][1] = 1;
 	mat[0][2] = 1;
 	mat[0][3] = 0;
@@ -61,10 +74,19 @@ int main()
 	mat[3][0] = 0;
 	mat[3][1] = 1;
 	mat[3][2] = 1;
-	mat[3][3] = 4;
+	mat[3][3] = 4;*/
 
-	double second_membre[4];
-	double x[4];
+	double second_membre[3];
+	double x[3];
+
+	second_membre[0] = 12;
+	second_membre[1] = 48;
+	second_membre[2] = 57;
+	x[0] = 0;
+	x[1] = 0;
+	x[2] = 0;
+
+	/*
 	second_membre[0] = 1;
 	second_membre[1] = 2;
 	second_membre[2] = 3;
@@ -72,13 +94,13 @@ int main()
 	x[0] = 0;
 	x[1] = 0;
 	x[2] = 0;
-	x[3] = 0;
+	x[3] = 0;*/
 
-	afficher_matrice(4, mat, second_membre);
+	afficher_matrice(3, mat, second_membre);
 	printf("\n");
 
-	jacobi(mat, second_membre, x, 0.001, 4, 1024);
-	afficher_matrice(4, mat, x);
+	gauss_seidel(mat, second_membre, x, 0.0001, 3, 1024);
+	afficher_matrice(3, mat, x);
 
 	printf("\n");
 
@@ -323,6 +345,45 @@ void cholesky(double **mat, double *b, double *x, int n)
 	free(y);
 	liberer_memoire_matrice(3, r);
 	liberer_memoire_matrice(3, rt);
+}
+
+void gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it)
+{
+	int i = 0;
+	int j = 0;
+	int compteur = 0;
+	double somme = 0;
+	double norme = e;
+
+	double *y = calloc(n, sizeof(double));
+
+	while(norme >= e && compteur < max_it)
+	{
+		for (i = 0 ; i < n ; i++)
+		{
+			y[i] = x[i];
+			somme = 0;
+			for(j = 0 ; j < i ; j++)
+			{
+				somme += mat[i][j] * x[j];
+			}
+			for(j = i + 1 ; j < n ; j++)
+			{
+				somme += mat[i][j] * x[j];
+			}
+			x[i] = (second_membre[i] - somme) / mat[i][i];
+		}
+		somme = 0;
+
+		for (i = 0 ; i < n ; i++){
+			somme += pow((y[i] - x[i]), 2);
+		}
+
+		norme = sqrtf(somme);
+		compteur ++;
+	}
+
+	printf("\n\n Il y a eu %d itération(s) pour arriver au résultat\n", compteur);
 }
 
 int trouver_decomposition(double **mat, double	**r, double **rt, int n)

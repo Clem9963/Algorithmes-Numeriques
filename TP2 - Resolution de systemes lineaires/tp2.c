@@ -41,33 +41,45 @@ int main()
 {
 	double **mat;
 
-	mat = allouer_memoire_matrice(3);
+	mat = allouer_memoire_matrice(4);
 
-	mat[0][0] = 64;
-	mat[0][1] = 40;
-	mat[0][2] = 24;
-	mat[1][0] = 40;
-	mat[1][1] = 29;
-	mat[1][2] = 17;
-	mat[2][0] = 24;
-	mat[2][1] = 17;
-	mat[2][2] = 19;
+	mat[0][0] = 4;
+	mat[0][1] = 1;
+	mat[0][2] = 1;
+	mat[0][3] = 0;
 
-	double second_membre[3];
-	double x[3];
+	mat[1][0] = 1;
+	mat[1][1] = 4;
+	mat[1][2] = 0;
+	mat[1][3] = 1;
+
+	mat[2][0] = 1;
+	mat[2][1] = 0;
+	mat[2][2] = 4;
+	mat[2][3] = 1;
+
+	mat[3][0] = 0;
+	mat[3][1] = 1;
+	mat[3][2] = 1;
+	mat[3][3] = 4;
+
+	double second_membre[4];
+	double x[4];
 	second_membre[0] = 1;
-	second_membre[1] = 1;
-	second_membre[2] = 1;
+	second_membre[1] = 2;
+	second_membre[2] = 3;
+	second_membre[3] = 4;
 	x[0] = 0;
 	x[1] = 0;
 	x[2] = 0;
+	x[3] = 0;
 
-	afficher_matrice(3, mat, second_membre);
+	afficher_matrice(4, mat, second_membre);
 	printf("\n");
 
-	cholesky(mat, second_membre, x, 3);
+	jacobi(mat, second_membre, x, 0.001, 4, 1024);
+	afficher_matrice(4, mat, x);
 
-	afficher_matrice(3, mat, x);
 	printf("\n");
 
 	return EXIT_SUCCESS;
@@ -252,43 +264,40 @@ void jacobi(double **mat, double *second_membre, double *x, double e, int n, int
 	int i = 0;
 	int j = 0;
 	int compteur = 0;
-	double somme_avant_i = 0;
-	double somme_apres_i = 0;
-	double norme = 0;
-	int converge = FALSE;
+	double somme = 0;
+	double norme = e;
 
 	double *y = calloc(n, sizeof(double));
 
-	while (converge == FALSE)
-	{ 
+	while(norme >= e && compteur < max_it)
+	{
 		for (i = 0 ; i < n ; i++)
 		{
-			for (j = 0 ; j < i ; j++)
+			somme = 0;
+			for(j = 0 ; j < i ; j++)
 			{
-				somme_avant_i = somme_avant_i + mat[i][j]*x[j];
+					somme += mat[i][j] * x[j];
 			}
-			for (j = i + 1 ; j < n ; j++)
+			for(j = i + 1 ; j < n ; j++)
 			{
-				somme_apres_i = somme_apres_i + mat[i][j]*x[j];
+					somme += mat[i][j] * x[j];
 			}
-			y[i] = second_membre[i] - somme_avant_i - somme_apres_i;
-			norme = norme + pow((x[i] - y[i]), 2);
-			somme_avant_i = 0;
-			somme_apres_i = 0;
+			y[i] = (second_membre[i] - somme) / mat[i][i];
 		}
-		norme = sqrt(norme);
-		if (norme < e)
-		{
-			converge = TRUE;
+		somme = 0;
+
+		for (i = 0 ; i < n ; i++){
+			somme += pow((y[i] - x[i]), 2);
 		}
-		norme = 0;
-		for (i = 0 ; i < n ; i++)
-		{
+
+		for(i = 0 ; i < n ; i++){
 			x[i] = y[i];
 		}
-		compteur++;
-		converge = converge || (compteur > max_it);
+		norme = sqrtf(somme);
+		compteur ++;
 	}
+
+	printf("\n\n Il y a eu %d itération(s) pour arriver au résultat\n", compteur);
 }
 
 void cholesky(double **mat, double *b, double *x, int n)
@@ -306,15 +315,7 @@ void cholesky(double **mat, double *b, double *x, int n)
 		exit(EXIT_FAILURE);
 	}
 
-	afficher_matrice(n, mat, y);
-	printf("\n");
-
 	trouver_decomposition(mat, r, rt, 3);
-
-	afficher_matrice(n, r, y);
-	printf("\n");
-	afficher_matrice(n, rt, y);
-	printf("\n");
 
 	resyst_tri_inf(rt, b, y, n);
 	resyst_tri_sup(r, y, x, n);

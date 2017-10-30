@@ -16,6 +16,7 @@ void afficher_solutions(int n, double *x);
 
 void gauss(double **A, double *b, double *x, int n);
 void jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it);
+int trouver_decomposition(double **mat, double	**r, int n);
 void resyst_tri_inf(double **mat, double *b1, double *x1, int n);
 void resyst_tri_sup(double **mat, double *b1, double *x1, int n);
 
@@ -31,18 +32,20 @@ double** generer_matrice_de_moler(int n);
 int main()
 {
 	double **mat;
+	double **r;
 
-	mat = generer_matrice_de_moler(3);
+	mat = allouer_memoire_matrice(3);
+	r = allouer_memoire_matrice(3);
 
-	mat[0][0] = 64;
-	mat[0][1] = 40;
-	mat[0][2] = 24;
-	mat[1][0] = 40;
-	mat[1][1] = 29;
-	mat[1][2] = 17;
-	mat[2][0] = 24;
-	mat[2][1] = 17;
-	mat[2][2] = 19;
+	mat[0][0] = 1;
+	mat[0][1] = 1;
+	mat[0][2] = 1;
+	mat[1][0] = 1;
+	mat[1][1] = 2;
+	mat[1][2] = 2;
+	mat[2][0] = 1;
+	mat[2][1] = 2;
+	mat[2][2] = 3;
 
 	double second_membre[3];
 	second_membre[0] = 1;
@@ -52,19 +55,9 @@ int main()
 	afficher_matrice(3, mat, second_membre);
 	printf("\n\n");
 
-	double x[3];
-	x[0] = 0;
-	x[1] = 0;
-	x[2] = 0;
-
-	jacobi(mat, second_membre, x, pow(10, -4), 3, 2*3*3);
-
-	afficher_matrice(3, mat, second_membre);
+	trouver_decomposition(mat, r, 3);
+	afficher_matrice(3, r, second_membre);
 	printf("\n\n");
-
-	printf("%f\n", x[0]);
-	printf("%f\n", x[1]);
-	printf("%f\n", x[2]);
 
 	return EXIT_SUCCESS;
 }
@@ -287,32 +280,69 @@ void jacobi(double **mat, double *second_membre, double *x, double e, int n, int
 	}
 }
 
+int trouver_decomposition(double **mat, double	**r, int n)
+{
+	int i = 0;
+	int j = 0;
+	int k = 0;
+	double s = 0;
+	double somme = 0;
+	for(i = 0 ; i < n ; i++)
+	{
+		for (k = 0 ; k < i ; k++)
+		{
+			somme = somme + pow(r[k][i], 2); 
+		}
+		s = mat[i][i] - somme;
+		if (s <= 0)
+		{
+			return FALSE;				// On retourne 0 car A n'est pas définie positive */
+		}
+		else
+		{
+			r[i][i] = sqrt(s);
+			somme = 0;
+			for (j = i + 1 ; j < n ; j++)
+			{
+				for (k = 0 ; k < i ; k++)
+				{
+					somme = somme + r[k][i] * r[k][j];
+				}
+				r[i][j] = (mat[i][j] - somme)/r[i][i];
+				somme = 0;
+			}
+		}
+	}
+	return TRUE;						// La matrice mat est bien définie positive et décomposable et l'on a trouvé sa décomposition
+}
+
 /*****Resolution du systeme lineaire (triangle inferieur)*****/
 void resyst_tri_inf(double **mat, double *b1, double *x1, int n)
 {
  	int i,k;
 	double S;
- 	x1[1]=b1[1]/mat[1][1];
- 	for(i=2;i<=n;i++)
+ 	x1[1] = b1[1] / mat[1][1];
+ 	for (i = 2 ; i <= n ; i++)
  	{
-		S=0;
-  		for(k=1;k<=i;k++)
-			S+=mat[i][k]*x1[k];
-		x1[i]=(b1[i]-S)/mat[i][i];
+		S = 0;
+  		for (k = 1 ; k <= i ; k++)
+			S += mat[i][k] * x1[k];
+		x1[i] = (b1[i]-S) / mat[i][i];
  	}
 }
+
 /*****Resolution du systeme lineaire (triangle superieur)*****/
 void resyst_tri_sup(double **mat, double *b1, double *x1, int n)
 {
  	int i,k;
 	double S;
- 	x1[n]=b1[n]/mat[n][n];
- 	for(i=n-1;i>=1;i--)
+ 	x1[n] = b1[n] / mat[n][n];
+ 	for (i = n-1 ; i>=1 ; i--)
  	{
-		S=0;
-  		for(k=n;k>=i+2;k--)
-			S+=mat[i][k]*x1[k];
-		x1[i]=(b1[i]-S)/mat[i][i];
+		S = 0;
+  		for (k = n ; k >= i+2 ; k--)
+			S += mat[i][k] * x1[k];
+		x1[i] = (b1[i]-S) / mat[i][i];
  	}
 }
 

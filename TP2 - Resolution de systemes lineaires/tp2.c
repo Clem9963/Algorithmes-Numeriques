@@ -39,6 +39,9 @@ int trouver_decomposition(double **mat, double	**r, double **rt, int n);
 void resyst_tri_inf(double **mat, double *b1, double *x1, int n);
 void resyst_tri_sup(double **mat, double *b1, double *x1, int n);
 
+/* Fonction de test */
+void tester_optimisation(double **mat, double *second_membre, double *x, double e, int n, int max_it);
+
 /* Fonctions de génération de matrices types */
 double** generer_matrice_creuse(int n);
 double** generer_matrice_bord(int n);
@@ -52,9 +55,8 @@ double** generer_matrice_de_moler(int n);
 int main()
 {
 	double **mat;
-	opt mesure = {0, 0};
 
-	mat = allouer_memoire_matrice(3);
+	/*mat = allouer_memoire_matrice(3);
 
 	mat[0][0] = 1;
 	mat[0][1] = 1;
@@ -66,7 +68,9 @@ int main()
 
 	mat[2][0] = 1;
 	mat[2][1] = 2;
-	mat[2][2] = 3;
+	mat[2][2] = 3;*/
+
+	mat = generer_matrice_kms(3, 0.5);
 
 	/*mat[0][0] = 4;
 	mat[0][1] = 1;
@@ -108,9 +112,9 @@ int main()
 	x[2] = 0;
 	x[3] = 0;*/
 
-	mesure = gauss(mat, second_membre, x, 3);
+	tester_optimisation(mat, second_membre, x, 0.001, 3, 1024);
 
-	printf("Le nombre de clocks est : %ld\nLe nombre d'octets alloués est : %ld\n", mesure.nb_clocks, mesure.octets);
+	afficher_matrice(3, mat, x);
 
 	return EXIT_SUCCESS;
 }
@@ -311,7 +315,11 @@ opt cholesky(double **mat, double *b, double *x, int n)
 		exit(EXIT_FAILURE);
 	}
 
-	trouver_decomposition(mat, r, rt, n);
+	if (trouver_decomposition(mat, r, rt, n) ==  FALSE)
+	{
+		printf("La matrice n'est pas défine positive\n");
+		return mesure;
+	}
 
 	resyst_tri_inf(rt, b, y, n);
 	resyst_tri_sup(r, y, x, n);
@@ -366,7 +374,7 @@ opt jacobi(double **mat, double *second_membre, double *x, double e, int n, int 
 
 	free(y);
 
-	printf("\n\nJacobi : Il y a eu %d itération(s) pour arriver au résultat\n", compteur);
+	printf("Jacobi : Il y a eu %d itération(s) pour arriver au résultat\n\n", compteur);
 
 	mesure.nb_clocks = clock() - mesure.nb_clocks;
 	return mesure;
@@ -412,7 +420,7 @@ opt gauss_seidel(double **mat, double *second_membre, double *x, double e, int n
 
 	free(y);
 
-	printf("\n\nGauss-Seidel : Il y a eu %d itération(s) pour arriver au résultat\n", compteur);
+	printf("Gauss-Seidel : Il y a eu %d itération(s) pour arriver au résultat\n\n", compteur);
 
 	mesure.nb_clocks = clock() - mesure.nb_clocks;
 	return mesure;
@@ -489,6 +497,105 @@ void resyst_tri_sup(double **mat, double *b1, double *x1, int n)
 			S += mat[i][k] * x1[k];
 		x1[i] = (b1[i]-S) / mat[i][i];
  	}
+}
+
+void tester_optimisation(double **mat, double *second_membre, double *x, double e, int n, int max_it)
+{
+	/* Cette fonction n'a de sens que si la matrice mat convient pour toutes les méthodes : elle doit donc être :
+	-> symétrique
+	-> définie positive
+	-> à diagonale strictement dominante */
+	
+	int i = 0;
+	int j = 0;
+	
+	opt mesure_gauss = {0, 0};
+	opt mesure_cholesky = {0, 0};
+	opt mesure_jacobi = {0, 0};
+	opt mesure_gauss_seidel = {0, 0};
+
+	double **mat_copy = allouer_memoire_matrice(n);	// Préparation d'une copie de la matrice car elle risque d'être modifiée
+	double *x_copy = calloc(n, sizeof(double));
+	double *second_membre_copy = calloc(n, sizeof(double));
+
+	for (i = 0 ; i < n ; i++)
+	{
+		x_copy[i] = x[i];
+	}
+	for (i = 0 ; i < n ; i++)
+	{
+		second_membre_copy[i] = second_membre[i];
+	}
+	for (i = 0 ; i < n ; i++)
+	{
+		for (j = 0 ; j < n ; j++)
+		{
+			mat_copy[i][j] = mat[i][j];
+		}
+	}
+
+	mesure_gauss = gauss(mat, second_membre, x, n);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		x[i] = x_copy[i];
+	}
+	for (i = 0 ; i < n ; i++)
+	{
+		second_membre[i] = second_membre_copy[i];
+	}
+	for (i = 0 ; i < n ; i++)
+	{
+		for (j = 0 ; j < n ; j++)
+		{
+			mat[i][j] = mat_copy[i][j];
+		}
+	}
+
+	mesure_cholesky = cholesky(mat, second_membre, x, n);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		x[i] = x_copy[i];
+	}
+	for (i = 0 ; i < n ; i++)
+	{
+		second_membre[i] = second_membre_copy[i];
+	}
+	for (i = 0 ; i < n ; i++)
+	{
+		for (j = 0 ; j < n ; j++)
+		{
+			mat[i][j] = mat_copy[i][j];
+		}
+	}
+
+	mesure_jacobi = jacobi(mat, second_membre, x, e, n, max_it);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		x[i] = x_copy[i];
+	}
+	for (i = 0 ; i < n ; i++)
+	{
+		second_membre[i] = second_membre_copy[i];
+	}
+	for (i = 0 ; i < n ; i++)
+	{
+		for (j = 0 ; j < n ; j++)
+		{
+			mat[i][j] = mat_copy[i][j];
+		}
+	}
+
+	mesure_gauss_seidel = gauss_seidel(mat, second_membre, x, e, n, max_it);
+
+	printf("Données brutes :\n\n");
+	printf("Gauss : %ld clocks processeur, %ld octets alloués\n", mesure_gauss.nb_clocks, mesure_gauss.octets);
+	printf("Cholesky : %ld clocks processeur, %ld octets alloués\n", mesure_cholesky.nb_clocks, mesure_cholesky.octets);
+	printf("Jacobi : %ld clocks processeur, %ld octets alloués\n", mesure_jacobi.nb_clocks, mesure_jacobi.octets);
+	printf("Gauss-Seidel : %ld clocks processeur, %ld octets alloués\n\n", mesure_gauss_seidel.nb_clocks, mesure_gauss_seidel.octets);
+
 }
 
 double** generer_matrice_creuse(int n)

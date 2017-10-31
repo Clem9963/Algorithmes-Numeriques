@@ -6,6 +6,17 @@
 #define TRUE 1
 #define FALSE 0
 
+/***********/
+/* TYPEDEF */
+/***********/
+
+struct optimisation
+{
+	clock_t nb_clocks;
+	size_t octets;
+};
+typedef struct optimisation opt;
+
 /**************/
 /* PROTOTYPES */
 /**************/
@@ -18,10 +29,10 @@ void afficher_matrice(int n, double **mat, double *second_membre);
 void afficher_solutions(int n, double *x);
 
 /* Fonctions de résolution de systèmes */
-time_t gauss(double **A, double *b, double *x, int n);
-time_t jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it);
-time_t cholesky(double **mat, double *b, double *x, int n);
-time_t gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it);
+opt gauss(double **A, double *b, double *x, int n);
+opt cholesky(double **mat, double *b, double *x, int n);
+opt jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it);
+opt gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it);
 
 /* Fonctions annexes */
 int trouver_decomposition(double **mat, double	**r, double **rt, int n);
@@ -41,6 +52,7 @@ double** generer_matrice_de_moler(int n);
 int main()
 {
 	double **mat;
+	opt mesure = {0, 0};
 
 	mat = allouer_memoire_matrice(3);
 
@@ -96,13 +108,9 @@ int main()
 	x[2] = 0;
 	x[3] = 0;*/
 
-	afficher_matrice(3, mat, second_membre);
-	printf("\n");
+	mesure = gauss(mat, second_membre, x, 3);
 
-	gauss_seidel(mat, second_membre, x, 0.0001, 3, 1024);
-	afficher_matrice(3, mat, x);
-
-	printf("\n");
+	printf("Le nombre de clocks est : %ld\nLe nombre d'octets alloués est : %ld\n", mesure.nb_clocks, mesure.octets);
 
 	return EXIT_SUCCESS;
 }
@@ -182,12 +190,14 @@ void afficher_matrice(int n, double **mat, double *second_membre)
 	}
 }
 
-time_t gauss(double **A, double *b, double *x, int n)
+opt gauss(double **A, double *b, double *x, int n)
 {
-	int i, j, k;
-	int imin;
-	double p;
-	double sum, valmin, tump1, tump2;
+	opt mesure = {clock(), 0};
+
+	int i, j, k; mesure.octets += 3*sizeof(int);
+	int imin; mesure.octets += sizeof(int);
+	double p;  mesure.octets += sizeof(double);
+	double sum, valmin, tump1, tump2; mesure.octets += 4*sizeof(double);
 	
 	for (k = 0 ; k < n-1 ; k++)
 	{
@@ -279,17 +289,52 @@ time_t gauss(double **A, double *b, double *x, int n)
 			}
 			x[i] = (b[i] - sum)/A[i][i];
 	}
+
+	mesure.nb_clocks = clock() - mesure.nb_clocks;
+	return mesure;
 }
 
-time_t jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it)
+opt cholesky(double **mat, double *b, double *x, int n)
 {
-	int i = 0;
-	int j = 0;
-	int compteur = 0;
-	double somme = 0;
-	double norme = e;
+	opt mesure = {clock(), 0};
 
-	double *y = calloc(n, sizeof(double));
+	double *y; mesure.octets += sizeof(double*);
+	double **r; mesure.octets += sizeof(double**);
+	double **rt; mesure.octets += sizeof(double**);
+	r = allouer_memoire_matrice(n); mesure.octets = mesure.octets + n*sizeof(double*) + n*sizeof(double);
+	rt = allouer_memoire_matrice(n); mesure.octets = mesure.octets + n*sizeof(double*) + n*sizeof(double);
+
+	y = calloc(n, sizeof(double)); mesure.octets += n*sizeof(double);
+	if (y == NULL)
+	{
+		printf("Une erreur est survenue lors de l'allocation de mémoire\n");
+		exit(EXIT_FAILURE);
+	}
+
+	trouver_decomposition(mat, r, rt, n);
+
+	resyst_tri_inf(rt, b, y, n);
+	resyst_tri_sup(r, y, x, n);
+
+	free(y);
+	liberer_memoire_matrice(n, r);
+	liberer_memoire_matrice(n, rt);
+
+	mesure.nb_clocks = clock() - mesure.nb_clocks;
+	return mesure;
+}
+
+opt jacobi(double **mat, double *second_membre, double *x, double e, int n, int max_it)
+{
+	opt mesure = {clock(), 0};
+
+	int i = 0; mesure.octets += sizeof(int);
+	int j = 0; mesure.octets += sizeof(int);
+	int compteur = 0; mesure.octets += sizeof(int);
+	double somme = 0; mesure.octets += sizeof(double);
+	double norme = e; mesure.octets += sizeof(double);
+
+	double *y = calloc(n, sizeof(double)); mesure.octets += n*sizeof(double);
 
 	while(norme >= e && compteur < max_it)
 	{
@@ -319,43 +364,25 @@ time_t jacobi(double **mat, double *second_membre, double *x, double e, int n, i
 		compteur ++;
 	}
 
-	printf("\n\n Il y a eu %d itération(s) pour arriver au résultat\n", compteur);
-}
-
-time_t cholesky(double **mat, double *b, double *x, int n)
-{
-	double *y;
-	double **r;
-	double **rt;
-	r = allouer_memoire_matrice(3);
-	rt = allouer_memoire_matrice(3);
-
-	y = calloc(n, sizeof(double));
-	if (y == NULL)
-	{
-		printf("Une erreur est survenue lors de l'allocation de mémoire\n");
-		exit(EXIT_FAILURE);
-	}
-
-	trouver_decomposition(mat, r, rt, 3);
-
-	resyst_tri_inf(rt, b, y, n);
-	resyst_tri_sup(r, y, x, n);
-
 	free(y);
-	liberer_memoire_matrice(3, r);
-	liberer_memoire_matrice(3, rt);
+
+	printf("\n\nJacobi : Il y a eu %d itération(s) pour arriver au résultat\n", compteur);
+
+	mesure.nb_clocks = clock() - mesure.nb_clocks;
+	return mesure;
 }
 
-time_t gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it)
+opt gauss_seidel(double **mat, double *second_membre, double *x, double e, int n, int max_it)
 {
-	int i = 0;
-	int j = 0;
-	int compteur = 0;
-	double somme = 0;
-	double norme = e;
+	opt mesure = {clock(), 0};
 
-	double *y = calloc(n, sizeof(double));
+	int i = 0; mesure.octets += sizeof(int);
+	int j = 0; mesure.octets += sizeof(int);
+	int compteur = 0; mesure.octets += sizeof(int);
+	double somme = 0; mesure.octets += sizeof(double);
+	double norme = e; mesure.octets += sizeof(double);
+
+	double *y = calloc(n, sizeof(double)); mesure.octets += n*sizeof(double);
 
 	while(norme >= e && compteur < max_it)
 	{
@@ -383,7 +410,12 @@ time_t gauss_seidel(double **mat, double *second_membre, double *x, double e, in
 		compteur ++;
 	}
 
-	printf("\n\n Il y a eu %d itération(s) pour arriver au résultat\n", compteur);
+	free(y);
+
+	printf("\n\nGauss-Seidel : Il y a eu %d itération(s) pour arriver au résultat\n", compteur);
+
+	mesure.nb_clocks = clock() - mesure.nb_clocks;
+	return mesure;
 }
 
 int trouver_decomposition(double **mat, double	**r, double **rt, int n)

@@ -25,8 +25,8 @@ typedef struct optimisation opt;
 int min(int a, int b);
 double** allouer_memoire_matrice(int n);
 void liberer_memoire_matrice(int n, double **mat);
-void afficher_matrice(int n, double **mat, double *second_membre);
-void afficher_solutions(int n, double *x);
+void afficher_matrice_et_solutions(int n, double **mat, double *second_membre);
+void afficher_solutions_chaque_methode(int n, double *x1, double *x2, double *x3, double *x4);
 
 /* Fonctions de résolution de systèmes */
 opt gauss(double **A, double *b, double *x, int n);
@@ -114,8 +114,6 @@ int main()
 
 	tester_optimisation(mat, second_membre, x, 0.001, 3, 1024);
 
-	afficher_matrice(3, mat, x);
-
 	return EXIT_SUCCESS;
 }
 
@@ -167,7 +165,7 @@ void liberer_memoire_matrice(int n, double **mat)
 	free(mat);
 }
 
-void afficher_matrice(int n, double **mat, double *second_membre)
+void afficher_matrice_et_solutions(int n, double **mat, double *second_membre)
 {
 	int i = 0;
 	int j = 0;
@@ -191,6 +189,21 @@ void afficher_matrice(int n, double **mat, double *second_membre)
 		}
 		nb_caracteres = printf("%f", second_membre[i]);
 		printf("\n");
+	}
+}
+
+void afficher_solutions_chaque_methode(int n, double *x_gauss, double *x_cholesky, double *x_jacobi, double *x_gauss_seidel)
+{
+	int i = 0;
+	printf("Affichage des solutions trouvées par les méthodes suivantes de gauche à droite :\n");
+	printf("Gauss, Cholesky, Jacobi, Gauss-Seidel\n");
+
+	for (i = 0 ; i < n ; i++)
+	{
+		printf("%f\t", x_gauss[i]);
+		printf("%f\t", x_cholesky[i]);
+		printf("%f\t", x_jacobi[i]);
+		printf("%f\t\n", x_gauss_seidel[i]);
 	}
 }
 
@@ -516,7 +529,30 @@ void tester_optimisation(double **mat, double *second_membre, double *x, double 
 
 	double **mat_copy = allouer_memoire_matrice(n);	// Préparation d'une copie de la matrice car elle risque d'être modifiée
 	double *x_copy = calloc(n, sizeof(double));
+	double *x_gauss = calloc(n, sizeof(double));
+	double *x_cholesky = calloc(n, sizeof(double));
+	double *x_jacobi = calloc(n, sizeof(double));
+	double *x_gauss_seidel = calloc(n, sizeof(double));
 	double *second_membre_copy = calloc(n, sizeof(double));
+
+	void reinitialiser()
+	{
+		for (i = 0 ; i < n ; i++)
+		{
+			x[i] = x_copy[i];
+		}
+		for (i = 0 ; i < n ; i++)
+		{
+			second_membre[i] = second_membre_copy[i];
+		}
+		for (i = 0 ; i < n ; i++)
+		{
+			for (j = 0 ; j < n ; j++)
+			{
+				mat[i][j] = mat_copy[i][j];
+			}
+		}
+	}
 
 	for (i = 0 ; i < n ; i++)
 	{
@@ -535,67 +571,49 @@ void tester_optimisation(double **mat, double *second_membre, double *x, double 
 	}
 
 	mesure_gauss = gauss(mat, second_membre, x, n);
-
 	for (i = 0 ; i < n ; i++)
 	{
-		x[i] = x_copy[i];
+		x_gauss[i] = x[i];
 	}
-	for (i = 0 ; i < n ; i++)
-	{
-		second_membre[i] = second_membre_copy[i];
-	}
-	for (i = 0 ; i < n ; i++)
-	{
-		for (j = 0 ; j < n ; j++)
-		{
-			mat[i][j] = mat_copy[i][j];
-		}
-	}
+	reinitialiser();
 
 	mesure_cholesky = cholesky(mat, second_membre, x, n);
-
 	for (i = 0 ; i < n ; i++)
 	{
-		x[i] = x_copy[i];
+		x_cholesky[i] = x[i];
 	}
-	for (i = 0 ; i < n ; i++)
-	{
-		second_membre[i] = second_membre_copy[i];
-	}
-	for (i = 0 ; i < n ; i++)
-	{
-		for (j = 0 ; j < n ; j++)
-		{
-			mat[i][j] = mat_copy[i][j];
-		}
-	}
+	reinitialiser();
 
 	mesure_jacobi = jacobi(mat, second_membre, x, e, n, max_it);
-
 	for (i = 0 ; i < n ; i++)
 	{
-		x[i] = x_copy[i];
+		x_jacobi[i] = x[i];
 	}
-	for (i = 0 ; i < n ; i++)
-	{
-		second_membre[i] = second_membre_copy[i];
-	}
-	for (i = 0 ; i < n ; i++)
-	{
-		for (j = 0 ; j < n ; j++)
-		{
-			mat[i][j] = mat_copy[i][j];
-		}
-	}
+	reinitialiser();
 
 	mesure_gauss_seidel = gauss_seidel(mat, second_membre, x, e, n, max_it);
+	for (i = 0 ; i < n ; i++)
+	{
+		x_gauss_seidel[i] = x[i];
+	}
 
-	printf("Données brutes :\n\n");
+	printf("\tDonnées brutes :\n\n");
 	printf("Gauss : %ld clocks processeur, %ld octets alloués\n", mesure_gauss.nb_clocks, mesure_gauss.octets);
 	printf("Cholesky : %ld clocks processeur, %ld octets alloués\n", mesure_cholesky.nb_clocks, mesure_cholesky.octets);
 	printf("Jacobi : %ld clocks processeur, %ld octets alloués\n", mesure_jacobi.nb_clocks, mesure_jacobi.octets);
-	printf("Gauss-Seidel : %ld clocks processeur, %ld octets alloués\n\n", mesure_gauss_seidel.nb_clocks, mesure_gauss_seidel.octets);
+	printf("Gauss-Seidel : %ld clocks processeur, %ld octets alloués\n\n\n", mesure_gauss_seidel.nb_clocks, mesure_gauss_seidel.octets);
 
+	printf("\tDonnées de temps d'éxécution en pourcentages par rapport à Gauss:\n\n");
+	printf("Cholesky a nécessité %.1f%% de clocks\n", (100*mesure_cholesky.nb_clocks/(double)mesure_gauss.nb_clocks));
+	printf("jacobi a nécessité %.1f%% de clocks\n", (100*mesure_jacobi.nb_clocks/(double)mesure_gauss.nb_clocks));
+	printf("Gauss-Seidel a nécessité %.1f%% de clocks\n\n\n", (100*mesure_gauss_seidel.nb_clocks/(double)mesure_gauss.nb_clocks));
+
+	printf("\tDonnées d'allocation de mémoire en pourcentages par rapport à Gauss:\n\n");
+	printf("Cholesky a nécessité %.1f%% d'octets\n", (100*mesure_cholesky.octets/(double)mesure_gauss.octets));
+	printf("jacobi a nécessité %.1f%% d'octets\n", (100*mesure_jacobi.octets/(double)mesure_gauss.octets));
+	printf("Gauss-Seidel a nécessité %.1f%% d'octets\n\n\n", (100*mesure_gauss_seidel.octets/(double)mesure_gauss.octets));
+
+	afficher_solutions_chaque_methode(n, x_gauss, x_cholesky, x_jacobi, x_gauss_seidel);
 }
 
 double** generer_matrice_creuse(int n)

@@ -41,6 +41,8 @@ void resyst_tri_sup(double **mat, double *b1, double *x1, int n);
 
 /* Fonction de test */
 void tester_optimisation(double **mat, double *second_membre, double *x, double e, int n, int max_it);
+int symetrique(double **mat,int n);
+int diagonale_dominante(double **mat,int n);
 
 /* Fonctions de génération de matrices types */
 double** generer_matrice_creuse(int n);
@@ -68,7 +70,7 @@ int main()
     x[1]=0;
     x[2]=0;
 
-	tester_optimisation(mat, second_membre, x,0.000000000000000001,3,1024);
+	tester_optimisation(mat, second_membre, x,0.1,3,1024);
 
 	return EXIT_SUCCESS;
 }
@@ -571,6 +573,51 @@ void tester_optimisation(double **mat, double *second_membre, double *x, double 
 
 	afficher_solutions_chaque_methode(n, x_gauss, x_cholesky, x_jacobi, x_gauss_seidel);
 }
+
+int symetrique(double **mat,int n)
+{
+    int i = 0;
+    int j = 0;
+    for(i=0;i<n;i++)
+    {
+        for(j=0;j<n;j++)
+        {
+            if(mat[i][j] != mat[j][i])
+            {
+                return FALSE;
+            }
+        }
+    }
+    return TRUE;
+}
+
+int diagonale_dominante(double **mat,int n)
+{
+    int i = 0;
+    int j = 0;
+    int sommeligne = 0;
+    int valeur_diago = 0;
+    for(i=0;i<n;i++)
+    {
+        for(j=0;j<n;j++)
+        {
+            if(i == j)
+            {
+                valeur_diago = mat[i][j];
+            }
+            sommeligne += mat[i][j];
+        }
+        if(fabs(valeur_diago) <= fabs(sommeligne - valeur_diago))
+        {
+            return FALSE; 
+        }
+        valeur_diago = 0;
+        sommeligne = 0;
+    }
+    return TRUE;
+}
+
+
 
 double** generer_matrice_creuse(int n)
 {

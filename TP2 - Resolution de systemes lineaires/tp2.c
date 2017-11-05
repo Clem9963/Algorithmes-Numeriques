@@ -25,7 +25,7 @@ typedef struct optimisation opt;
 int min(int a, int b);
 double** allouer_memoire_matrice(int n);
 void liberer_memoire_matrice(int n, double **mat);
-void afficher_matrice_et_solutions(int n, double **mat, double *second_membre);
+void afficher_matrice_et_second_membre(int n, double **mat, double *second_membre);
 void afficher_solutions_chaque_methode(int n, double *x1, double *x2, double *x3, double *x4);
 
 /* Fonctions de résolution de systèmes */
@@ -71,6 +71,8 @@ int main()
     x[2]=0;
 
 	tester_optimisation(mat, second_membre, x,0.1,3,1024);
+
+	liberer_memoire_matrice(3, mat);
 
 	return EXIT_SUCCESS;
 }
@@ -123,7 +125,7 @@ void liberer_memoire_matrice(int n, double **mat)
 	free(mat);
 }
 
-void afficher_matrice_et_solutions(int n, double **mat, double *second_membre)
+void afficher_matrice_et_second_membre(int n, double **mat, double *second_membre)
 {
 	int i = 0;
 	int j = 0;

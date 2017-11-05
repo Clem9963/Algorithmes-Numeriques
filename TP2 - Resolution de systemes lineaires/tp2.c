@@ -41,8 +41,8 @@ void resyst_tri_sup(double **mat, double *b1, double *x1, int n);
 
 /* Fonction de test */
 void tester_optimisation(double **mat, double *second_membre, double *x, double e, int n, int max_it);
-int symetrique(double **mat,int n);
-int diagonale_dominante(double **mat,int n);
+int symetrique(double **mat, int n);
+int diagonale_dominante(double **mat, int n);
 
 /* Fonctions de génération de matrices types */
 double** generer_matrice_creuse(int n);
@@ -64,7 +64,7 @@ int main()
 
     second_membre[0] = 12;
     second_membre[1] = 48;
-    second_membre[2]=57;
+    second_membre[2]=  57;
 
     x[0]=0;
     x[1]=0;
@@ -477,6 +477,12 @@ void tester_optimisation(double **mat, double *second_membre, double *x, double 
 	-> définie positive
 	-> à diagonale strictement dominante */
 	
+	if (!symetrique(mat, n) || !diagonale_dominante(mat, n))
+	{
+		printf("La matrice fournie en argument ne convient pas :\nElle n'est pas symétrique ou non à diagonale dominante\n");
+		return;
+	}
+
 	int i = 0;
 	int j = 0;
 	
@@ -578,9 +584,9 @@ int symetrique(double **mat,int n)
 {
     int i = 0;
     int j = 0;
-    for(i=0;i<n;i++)
+    for(i=0 ; i<n ; i++)
     {
-        for(j=0;j<n;j++)
+        for(j=0 ; j<n ; j++)
         {
             if(mat[i][j] != mat[j][i])
             {
@@ -597,9 +603,9 @@ int diagonale_dominante(double **mat,int n)
     int j = 0;
     int sommeligne = 0;
     int valeur_diago = 0;
-    for(i=0;i<n;i++)
+    for(i=0 ; i<n ; i++)
     {
-        for(j=0;j<n;j++)
+        for(j=0 ; j<n ; j++)
         {
             if(i == j)
             {
@@ -616,8 +622,6 @@ int diagonale_dominante(double **mat,int n)
     }
     return TRUE;
 }
-
-
 
 double** generer_matrice_creuse(int n)
 {

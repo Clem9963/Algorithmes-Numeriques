@@ -64,13 +64,13 @@ int main()
 
     second_membre[0] = 12;
     second_membre[1] = 48;
-    second_membre[2]=57;
+    second_membre[2]= 57;
 
     x[0]=0;
     x[1]=0;
     x[2]=0;
 
-	tester_optimisation(mat, second_membre, x,0.1,3,1024);
+	tester_optimisation(mat, second_membre, x,0.001,3,1024);
 
 	return EXIT_SUCCESS;
 }

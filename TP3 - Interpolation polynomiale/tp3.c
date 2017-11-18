@@ -7,10 +7,11 @@ double lagrange(double *x, double *y, int n, double a);
 double** calcule_differences_divisees(double *x, double *y, int n);
 void afficher_differences_divisees(int n, double **differences_divisees);
 void liberer_differences_divisees(int n, double **differences_divisees);
-double newton(int n, double **differences_divisees, double a);
+double newton(double *x, int n, double **differences_divisees, double a);
 
 int main()
 {
+	double res = 0;
 	/*double x[20] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38};
 	double y[20] = {0.99987, 0.99997, 1, 0.99997, 0.99988, 0.99973, 0.99953, 0.99927, 0.99897, 0.99846,
 					0.99805, 0.99751, 0.99705, 0.99650, 0.99664, 0.99533, 0.99472, 0.99472, 0.99333, 0.99326};*/
@@ -19,7 +20,8 @@ int main()
 	double y[4] = {0, 0, 0, 6};
 
 	double** differences_divisees = calcule_differences_divisees(x, y, 4);
-	newton(4, differences_divisees, 20);
+	res = newton(x, 4, differences_divisees, 3);
+	printf("%.3f\n", res);
 	liberer_differences_divisees(4, differences_divisees);
 
 	return 0;
@@ -100,10 +102,11 @@ void liberer_differences_divisees(int n, double **differences_divisees)
 	free(differences_divisees);
 }
 
-double newton(int n, double **differences_divisees, double a)
+double newton(double *x, int n, double **differences_divisees, double a)
 {
 	double* tab_a = calloc(n, sizeof(double));
 	double pa = 0;
+	double produit_polynomes = 1;
 	int i = 0;
 	int j = 1;
 	
@@ -111,15 +114,19 @@ double newton(int n, double **differences_divisees, double a)
 	{
 		tab_a[i] = differences_divisees[i][j];
 		j++;
-		printf("%f   ", tab_a[i]);
 	}
+
+	j = 0;
 
 	for (i = 0; i < n; i++)
 	{
-		for (int i = 0; i < count; ++i)
+		for (j = 0; j < i; j++)
 		{
-			/* code */
+			produit_polynomes *= (a - x[j]);
 		}
-		pa = (tab_a[i]);
+		pa = pa + (tab_a[i])*produit_polynomes;
+		produit_polynomes = 1;
 	}
+
+	return pa;
 }

@@ -25,15 +25,22 @@ void newton(double *x, double *y, int n, double *a, double *pa, int n_a, opt *me
 double** calcule_differences_divisees(double *x, double *y, int n, opt *mesure);
 void afficher_differences_divisees(int n, double **differences_divisees);
 void liberer_differences_divisees(int n, double **differences_divisees);
+double* generer_tab_a(double borne_inf, double borne_sup, int *n);
+void liberer_tab_a(double *tab_a);
+
 
 int main()
 {
 	int i = 0;
-	int choix = 1;
+	int n = 0;
+	FILE *f_dest;
+	double *a;
 
-	double x[20] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38};
+	int choix = 2;
+
+	/*double x[20] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38};
 	double y[20] = {0.99987, 0.99997, 1, 0.99997, 0.99988, 0.99973, 0.99953, 0.99927, 0.99897, 0.99846,
-					0.99805, 0.99751, 0.99705, 0.99650, 0.99664, 0.99533, 0.99472, 0.99472, 0.99333, 0.99326};
+					0.99805, 0.99751, 0.99705, 0.99650, 0.99664, 0.99533, 0.99472, 0.99472, 0.99333, 0.99326};*/
 
 	/*double x[11] = {10, 8, 13, 9, 11, 14, 6, 4, 12, 7, 5};
 	double y[11] = {9.14, 8.14, 8.74, 8.77, 9.26, 8.1, 6.13, 3.1, 9.13, 7.26, 4.74};*/
@@ -44,32 +51,38 @@ int main()
 	/*double x[21] = {752, 855, 871, 734, 610, 582, 921, 492, 569, 462, 907, 643, 862, 524, 679, 902, 918, 828, 875, 809, 894};
 	double y[21] = {85, 83, 162, 79, 81, 83, 281, 81, 81, 80, 243, 84, 84, 82, 226, 260, 82, 186, 77, 223};*/
 
-	/*double x[4] = {1,2,3,4};
-	double y[4] = {0,0,0,6};*/
+	double x[4] = {1,2,3,4};
+	double y[4] = {0,0,0,6};
 
 	opt mesure = {0, 0};
+
+	a = generer_tab_a(0, 4, &n);
 	
-	double a[30] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30};
-	double pa[30] = {0};
+	double* pa = calloc(n, sizeof(double));
 
 	if (choix == 1)
 	{
-		lagrange(x, y, 4, a, pa, 4, &mesure);
+		lagrange(x, y, 4, a, pa, n, &mesure);
 		printf("Vous avez choisi d'utiliser la méthode de Lagrange\n");
 	}
 	else
 	{
-		newton(x, y, 4, a, pa, 4, &mesure);
+		newton(x, y, 4, a, pa, n, &mesure);
 		printf("Vous avez choisi d'utiliser la méthode de Newton\n");
 	}
 
-	/*for (i = 0; i < 4; i++)
+	f_dest = fopen("polynome.pol", "w");
+	for (i = 0; i < n-1; i++)
 	{
-		printf("%f\n", pa[i]);
-	}*/
+		fprintf(f_dest, "%f,%f\n", a[i], pa[i]);
+	}
+	fprintf(f_dest, "%f,%f", a[i], pa[i]);
+
 
 	printf("La méthode a nécessité %ld clocks processeur et %ld octets ont été alloués\n", mesure.nb_clocks, mesure.octets);
 
+	liberer_tab_a(a);
+	free(pa);
 
 	return 0;
 }
@@ -191,4 +204,26 @@ void liberer_differences_divisees(int n, double **differences_divisees)
 		free(differences_divisees[i]);
 	}
 	free(differences_divisees);
+}
+
+double* generer_tab_a(double borne_inf, double borne_sup, int *n)
+{
+	int i = 0;
+	double differences = borne_sup - borne_inf;
+
+	*n = (int)(differences / 0.0001);
+
+	double *tab_a = calloc(*n, sizeof(double));
+
+	for (i = 0; i <*n; i++)
+	{
+		tab_a[i] = borne_inf + i*0.0001;
+	}
+
+	return tab_a;
+}
+
+void liberer_tab_a(double *tab_a)
+{
+	free(tab_a);
 }

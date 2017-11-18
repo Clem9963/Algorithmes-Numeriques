@@ -64,11 +64,7 @@ int main()
 
     second_membre[0] = 12;
     second_membre[1] = 48;
-<<<<<<< HEAD
     second_membre[2]= 57;
-=======
-    second_membre[2]=  57;
->>>>>>> efa9230925a8eaa37f3d7115f65b51ad7e7fc80e
 
     x[0]=0;
     x[1]=0;

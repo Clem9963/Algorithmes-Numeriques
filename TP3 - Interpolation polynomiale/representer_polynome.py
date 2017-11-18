@@ -12,5 +12,7 @@ with open("polynome.pol", encoding = "utf-8") as f:
         d = donnees[1]
         y.append(float(d))
 
+axvline(0, color = 'k')
+axhline(0, color = 'k')
 plot(x, y)
 show()

@@ -53,7 +53,8 @@ int main()
 	double x[6] = {-2, 1, 4, -1, 3, -4};
 	double y[6] = {-1, 2, 59, 4, 24, -53};
 
-	demarrer_methode(2, x, y, 6, -2.5, 2);
+	demarrer_methode(1, x, y, 6, -4.5, 4.5);
+    demarrer_methode(2, x, y, 6, -4.5, 4.5);
 
 	return 0;
 }

@@ -24,6 +24,8 @@ void methode_puissance(int ordre, double A[ordre][ordre], double *v, double e)
 	int i = 0;
 	int j = 0;
 	int k = 0;
+	double numerateur = 0;
+	double denominateur = 0;
 
 	printf("%f\n", A[0][0]);
 	printf("%f\n", A[0][1]);
@@ -47,20 +49,43 @@ void methode_puissance(int ordre, double A[ordre][ordre], double *v, double e)
 			v[i] = 0;
 			for (j = 0; j < ordre; j++)
 			{
-				for (k = 0; k < ordre; k++)
-				{
-					printf("%f\n",v[i]);
-					v[i] += A[k][j]*v_ancien[k];
-				}
+				v[i] += A[i][j] * v_ancien[j];
 			}
+		}
+
+		for (i = 0; i < ordre; i++)
+		{
+			v[i] = v[i]/v[ordre-1];
 		}
 	}
 
-	printf("Voici le vecteur propre associé à la plus grande valeur propre de la matrice fournie en argument\n");
+	printf("Voici le vecteur propre associé à la plus grande valeur propre de la matrice\nfournie en argument :\n");
 	for (i = 0; i < ordre; i++)
 	{
 		printf("%f\n", v[i]);
 	}
+
+	for (i = 0; i < ordre; i++)
+	{
+		v_ancien[i] = 0;
+		for (j = 0; j < ordre; j++)
+		{
+			v_ancien[i] += A[i][j] * v[j];
+		}
+	}
+
+	for (i = 0; i < ordre; i++)
+	{
+		numerateur += v[i] * v_ancien[i];
+	}
+
+	for (i = 0; i < ordre; i++)
+	{
+		denominateur += v[i] * v[i];
+	}
+
+	printf("Voici la plus grande valeur propre de la matrice\nfournie en argument : %f\n", numerateur/denominateur);
+
 }
 
 double calcule_norme(double *u, double *v, int ordre)

@@ -2,28 +2,56 @@
 #include <stdlib.h>
 #include <math.h>
 
-void methode_puissance(int ordre, double A[ordre][ordre], double *v, double e);
+void methode_puissance(int ordre, double **A, double *v, double e);
 double calcule_norme(double *u, double *v, int ordre);
+void multiplier_matrices(double **A, double **B, double **R, int n);
+void multiplier_matrice_scalaire(double **A, double k, double **R, int n);
+
+double** allouer_memoire_matrice(int n);
+void liberer_memoire_matrice(int n, double **mat);
+void afficher_matrice(int n, double **mat);
 
 int main()
 {
-	double A[2][2] = {{3, 6}, {1, 4}};
-	int ordre = 2;
-	double v[2] = {0, 0};
-	double e = 0.01;
+	double **A = allouer_memoire_matrice(3);
+	double **B = allouer_memoire_matrice(3);
+	double **R = allouer_memoire_matrice(3);
 
-	methode_puissance(ordre, A, v, e);
+	A[0][0] = 1;
+	A[0][1] = 2;
+	A[0][2] = 3;
+	A[1][0] = 4;
+	A[1][1] = 5;
+	A[1][2] = 6;
+	A[2][0] = 7;
+	A[2][1] = 8;
+	A[2][2] = 9;
+	
+	B[0][0] = 9;
+	B[0][1] = 8;
+	B[0][2] = 7;
+	B[1][0] = 6;
+	B[1][1] = 5;
+	B[1][2] = 4;
+	B[2][0] = 3;
+	B[2][1] = 2;
+	B[2][2] = 1;
+
+	multiplier_matrices(A, B, R, 3);
+
+	afficher_matrice(3, A);
+	afficher_matrice(3, B);
+	afficher_matrice(3, R);
 
 	return EXIT_SUCCESS;
 }
 
-void methode_puissance(int ordre, double A[ordre][ordre], double *v, double e)
+void methode_puissance(int ordre, double **A, double *v, double e)
 {
 	// Initialisation de v avec toutes les composantes à 0
 	double *v_ancien = calloc(ordre, sizeof(double));
 	int i = 0;
 	int j = 0;
-	int k = 0;
 	double numerateur = 0;
 	double denominateur = 0;
 
@@ -99,4 +127,85 @@ double calcule_norme(double *u, double *v, int ordre)
 	}
 
 	return sqrt(somme);
+}
+
+void multiplier_matrices(double **A, double **B, double **R, int n)
+{
+	int i = 0;
+	int j = 0;
+	int k = 0;
+	for (i = 0; i < n; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			R[i][j] = 0;
+			for (k = 0; k < n; k++)
+			{
+				R[i][j] += A[i][k] * B[k][j];
+			}
+		}
+	}
+}
+
+void multiplier_matrice_scalaire(double **A, double k, double **R, int n)
+{
+	int i = 0;
+	int j = 0;
+	for (i = 0; i < n; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			R[i][j] = k * A[i][j];
+		}
+	}
+}
+
+double** allouer_memoire_matrice(int n)
+{
+	int i = 0;
+	double **mat;
+
+	mat = calloc(n, sizeof(double*));
+	if (mat == NULL)
+	{
+		printf("Une erreur est survenue lors de l'allocation de mémoire\n");
+		exit(EXIT_FAILURE);
+	}
+
+	for (i = 0 ; i < n ; i++)
+	{
+		mat[i] = calloc(n, sizeof(double));
+		if (mat == NULL)
+		{
+			printf("Une erreur est survenue lors de l'allocation de mémoire\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+	return mat;
+}
+
+void liberer_memoire_matrice(int n, double **mat)
+{
+	int i = 0;
+
+	for (i = 0 ; i < n ; i++)
+	{
+		free(mat[i]);
+	}
+
+	free(mat);
+}
+
+void afficher_matrice(int n, double **mat)
+{
+	int i = 0;
+	int j = 0;
+	for (i = 0; i < n; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			printf("%f\t", mat[i][j]);
+		}
+		printf("\n");
+	}
 }

@@ -3,12 +3,16 @@
 #include <math.h>
 
 void methode_leverrier_base(int ordre, double **A, double *coefficients);
+void methode_leverrier_amelioree(int ordre, double **A, double *coefficients);
 void methode_puissance(int ordre, double **A, double *v, double e);
 
-double calcule_norme(double *u, double *v, int ordre);
-void multiplier_matrices(double **A, double **B, double **R, int n);
+void generer_identite(double **A, int n);
+void copier_matrice(double **src, double **dest, int n);
 void puissance_matrice(double **A, int p, double **R, int n);
+void multiplier_matrices(double **A, double **B, double **R, int n);
 void multiplier_matrice_scalaire(double **A, double k, double **R, int n);
+void additionner_matrices(double **A, double **B, double **R, int n);
+double calcule_norme(double *u, double *v, int ordre);
 double calcule_trace(double **A, int n);
 
 double** allouer_memoire_matrice(int n);
@@ -41,11 +45,11 @@ int main()
 	B[2][1] = 0;
 	B[2][2] = 3;
 
-	double coefficients[3];
+	double coefficients[4];
 
 	// multiplier_matrices(A, B, R, 3);
 	// puissance_matrice(A, 3, R, 3);
-	methode_leverrier_base(3, A, coefficients);
+	methode_leverrier_amelioree(3, A, coefficients);
 
 	// afficher_matrice(3, A);
 	//afficher_matrice(3, R);
@@ -53,6 +57,7 @@ int main()
 	printf("%f\n", coefficients[0]);
 	printf("%f\n", coefficients[1]);
 	printf("%f\n", coefficients[2]);
+	printf("%f\n", coefficients[3]);
 
 	return EXIT_SUCCESS;
 }
@@ -65,7 +70,7 @@ void methode_leverrier_base(int ordre, double **A, double *coefficients)
 
 	coefficients[0] = pow(-1, ordre);
 
-	for (i = 1; i < ordre; i++)
+	for (i = 1; i <= ordre; i++)
 	{
 		coefficients[i] = 0;
 		for (j = 0; j < i; j++)
@@ -74,6 +79,30 @@ void methode_leverrier_base(int ordre, double **A, double *coefficients)
 			coefficients[i] += coefficients[j]*calcule_trace(M, ordre);
 		}
 		coefficients[i] = -coefficients[i]/i;
+	}
+}
+
+void methode_leverrier_amelioree(int ordre, double **A, double *coefficients)
+{
+	double **A_buffer_1 = allouer_memoire_matrice(ordre);
+	copier_matrice(A, A_buffer_1, ordre);
+	double **A_buffer_2 = allouer_memoire_matrice(ordre);
+	copier_matrice(A, A_buffer_2, ordre);
+	double **B_buffer = allouer_memoire_matrice(ordre);
+	generer_identite(B_buffer, ordre);
+	double **M_buffer = allouer_memoire_matrice(ordre);
+	int i = 0;
+
+	coefficients[0] = pow(-1, ordre);
+
+	for (i = 1; i <= ordre; i++)
+	{
+		multiplier_matrices(B_buffer, A_buffer_1, A_buffer_2, ordre);
+		copier_matrice(A_buffer_2, A_buffer_1, ordre);
+		coefficients[i] = pow(-1, ordre+1)*(1/i)*calcule_trace(A_buffer_2, ordre);
+		generer_identite(M_buffer, ordre);
+		multiplier_matrice_scalaire(M_buffer, -pow(-1, ordre+1)*coefficients[i], B_buffer, ordre);
+		additionner_matrices(A_buffer_2, B_buffer, B_buffer, ordre);
 	}
 }
 
@@ -144,36 +173,26 @@ void methode_puissance(int ordre, double **A, double *v, double e)
 	}
 
 	printf("Voici la plus grande valeur propre de la matrice\nfournie en argument : %f\n", numerateur/denominateur);
-
 }
 
-double calcule_norme(double *u, double *v, int ordre)
+void generer_identite(double **A, int n)
 {
 	int i = 0;
-	double somme = 0;
-
-	for (i = 0 ; i < ordre ; i++)
+	for (i = 0; i < n; i++)
 	{
-		somme += pow((u[i] - v[i]), 2);
+		A[i][i] = 1;
 	}
-
-	return sqrt(somme);
 }
 
-void multiplier_matrices(double **A, double **B, double **R, int n)
+void copier_matrice(double **src, double **dest, int n)
 {
 	int i = 0;
 	int j = 0;
-	int k = 0;
 	for (i = 0; i < n; i++)
 	{
 		for (j = 0; j < n; j++)
 		{
-			R[i][j] = 0;
-			for (k = 0; k < n; k++)
-			{
-				R[i][j] += A[i][k] * B[k][j];
-			}
+			dest[i][j] = src[i][j];
 		}
 	}
 }
@@ -206,6 +225,24 @@ void puissance_matrice(double **A, int p, double **R, int n)
 	liberer_memoire_matrice(n, M);
 }
 
+void multiplier_matrices(double **A, double **B, double **R, int n)
+{
+	int i = 0;
+	int j = 0;
+	int k = 0;
+	for (i = 0; i < n; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			R[i][j] = 0;
+			for (k = 0; k < n; k++)
+			{
+				R[i][j] += A[i][k] * B[k][j];
+			}
+		}
+	}
+}
+
 void multiplier_matrice_scalaire(double **A, double k, double **R, int n)
 {
 	int i = 0;
@@ -217,6 +254,32 @@ void multiplier_matrice_scalaire(double **A, double k, double **R, int n)
 			R[i][j] = k * A[i][j];
 		}
 	}
+}
+
+void additionner_matrices(double **A, double **B, double **R, int n)
+{
+	int i = 0;
+	int j = 0;
+	for (i = 0; i < n; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			R[i][j] = A[i][j] + B[i][j];
+		}
+	}
+}
+
+double calcule_norme(double *u, double *v, int ordre)
+{
+	int i = 0;
+	double somme = 0;
+
+	for (i = 0 ; i < ordre ; i++)
+	{
+		somme += pow((u[i] - v[i]), 2);
+	}
+
+	return sqrt(somme);
 }
 
 double calcule_trace(double **A, int n)

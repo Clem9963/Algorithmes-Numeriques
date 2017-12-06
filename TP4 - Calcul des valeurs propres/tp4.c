@@ -2,10 +2,14 @@
 #include <stdlib.h>
 #include <math.h>
 
+void methode_leverrier_base(int ordre, double **A, double *coefficients);
 void methode_puissance(int ordre, double **A, double *v, double e);
+
 double calcule_norme(double *u, double *v, int ordre);
 void multiplier_matrices(double **A, double **B, double **R, int n);
+void puissance_matrice(double **A, int p, double **R, int n);
 void multiplier_matrice_scalaire(double **A, double k, double **R, int n);
+double calcule_trace(double **A, int n);
 
 double** allouer_memoire_matrice(int n);
 void liberer_memoire_matrice(int n, double **mat);
@@ -15,35 +19,62 @@ int main()
 {
 	double **A = allouer_memoire_matrice(3);
 	double **B = allouer_memoire_matrice(3);
-	double **R = allouer_memoire_matrice(3);
+	//double **R = allouer_memoire_matrice(3);
 
 	A[0][0] = 1;
-	A[0][1] = 2;
-	A[0][2] = 3;
-	A[1][0] = 4;
-	A[1][1] = 5;
-	A[1][2] = 6;
-	A[2][0] = 7;
-	A[2][1] = 8;
-	A[2][2] = 9;
-	
-	B[0][0] = 9;
-	B[0][1] = 8;
-	B[0][2] = 7;
-	B[1][0] = 6;
-	B[1][1] = 5;
-	B[1][2] = 4;
-	B[2][0] = 3;
-	B[2][1] = 2;
-	B[2][2] = 1;
+	A[0][1] = 0;
+	A[0][2] = 0;
+	A[1][0] = 0;
+	A[1][1] = 2;
+	A[1][2] = 0;
+	A[2][0] = 0;
+	A[2][1] = 0;
+	A[2][2] = 3;
 
-	multiplier_matrices(A, B, R, 3);
+	B[0][0] = 1;
+	B[0][1] = 0;
+	B[0][2] = 0;
+	B[1][0] = 0;
+	B[1][1] = 2;
+	B[1][2] = 0;
+	B[2][0] = 0;
+	B[2][1] = 0;
+	B[2][2] = 3;
 
-	afficher_matrice(3, A);
-	afficher_matrice(3, B);
-	afficher_matrice(3, R);
+	double coefficients[3];
+
+	// multiplier_matrices(A, B, R, 3);
+	// puissance_matrice(A, 3, R, 3);
+	methode_leverrier_base(3, A, coefficients);
+
+	// afficher_matrice(3, A);
+	//afficher_matrice(3, R);
+
+	printf("%f\n", coefficients[0]);
+	printf("%f\n", coefficients[1]);
+	printf("%f\n", coefficients[2]);
 
 	return EXIT_SUCCESS;
+}
+
+void methode_leverrier_base(int ordre, double **A, double *coefficients)
+{
+	int i = 0;
+	int j = 0;
+	double **M = allouer_memoire_matrice(ordre);
+
+	coefficients[0] = pow(-1, ordre);
+
+	for (i = 1; i < ordre; i++)
+	{
+		coefficients[i] = 0;
+		for (j = 0; j < i; j++)
+		{
+			puissance_matrice(A, i-j, M, ordre);
+			coefficients[i] += coefficients[j]*calcule_trace(M, ordre);
+		}
+		coefficients[i] = -coefficients[i]/i;
+	}
 }
 
 void methode_puissance(int ordre, double **A, double *v, double e)
@@ -147,6 +178,34 @@ void multiplier_matrices(double **A, double **B, double **R, int n)
 	}
 }
 
+void puissance_matrice(double **A, int p, double **R, int n)
+{
+	double **M = allouer_memoire_matrice(n);
+	int i = 0;
+	int j = 0;
+	int k = 0;
+
+	for (j = 0; j < n; j++)
+	{
+		for (k = 0; k < n; k++)
+		{
+			R[j][k] = A[j][k];
+		}
+	}
+	for (i = 2; i <= p; i++)
+	{
+		for (j = 0; j < n; j++)
+		{
+			for (k = 0; k < n; k++)
+			{
+				M[j][k] = R[j][k];
+			}
+		}
+		multiplier_matrices(A, M, R, n);
+	}
+	liberer_memoire_matrice(n, M);
+}
+
 void multiplier_matrice_scalaire(double **A, double k, double **R, int n)
 {
 	int i = 0;
@@ -158,6 +217,17 @@ void multiplier_matrice_scalaire(double **A, double k, double **R, int n)
 			R[i][j] = k * A[i][j];
 		}
 	}
+}
+
+double calcule_trace(double **A, int n)
+{
+	int i = 0;
+	double trace = 0;
+	for (i = 0; i < n; i++)
+	{
+		trace += A[i][i];
+	}
+	return trace;
 }
 
 double** allouer_memoire_matrice(int n)

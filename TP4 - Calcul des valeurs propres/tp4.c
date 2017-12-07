@@ -84,10 +84,8 @@ void methode_leverrier_base(int ordre, double **A, double *coefficients)
 
 void methode_leverrier_amelioree(int ordre, double **A, double *coefficients)
 {
-	double **A_buffer_1 = allouer_memoire_matrice(ordre);
-	copier_matrice(A, A_buffer_1, ordre);
-	double **A_buffer_2 = allouer_memoire_matrice(ordre);
-	copier_matrice(A, A_buffer_2, ordre);
+	double **A_buffer = allouer_memoire_matrice(ordre);
+	copier_matrice(A, A_buffer, ordre);
 	double **B_buffer = allouer_memoire_matrice(ordre);
 	generer_identite(B_buffer, ordre);
 	double **M_buffer = allouer_memoire_matrice(ordre);
@@ -97,12 +95,11 @@ void methode_leverrier_amelioree(int ordre, double **A, double *coefficients)
 
 	for (i = 1; i <= ordre; i++)
 	{
-		multiplier_matrices(B_buffer, A_buffer_1, A_buffer_2, ordre);
-		copier_matrice(A_buffer_2, A_buffer_1, ordre);
-		coefficients[i] = pow(-1, ordre+1)*(1/i)*calcule_trace(A_buffer_2, ordre);
+		multiplier_matrices(B_buffer, A, A_buffer, ordre);
+		coefficients[i] = pow(-1, ordre+1)*(1.0/i)*calcule_trace(A_buffer, ordre);
 		generer_identite(M_buffer, ordre);
 		multiplier_matrice_scalaire(M_buffer, -pow(-1, ordre+1)*coefficients[i], B_buffer, ordre);
-		additionner_matrices(A_buffer_2, B_buffer, B_buffer, ordre);
+		additionner_matrices(A_buffer, B_buffer, B_buffer, ordre);
 	}
 }
 
@@ -178,9 +175,20 @@ void methode_puissance(int ordre, double **A, double *v, double e)
 void generer_identite(double **A, int n)
 {
 	int i = 0;
+	int j = 0;
 	for (i = 0; i < n; i++)
 	{
-		A[i][i] = 1;
+		for (j = 0; j < n; j++)
+		{
+			if (i == j)
+			{
+				A[i][j] = 1;
+			}
+			else
+			{
+				A[i][j] = 0;
+			}
+		}
 	}
 }
 

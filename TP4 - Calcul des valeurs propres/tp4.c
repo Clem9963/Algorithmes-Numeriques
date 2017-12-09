@@ -1,11 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <math.h>
 
-void methode_leverrier_base(int ordre, double **A, double *coefficients);
-void methode_leverrier_amelioree(int ordre, double **A, double *coefficients);
-void methode_puissance(int ordre, double **A, double *v, double e);
+struct optimisation
+{
+	clock_t nb_clocks;
+	size_t octets;
+};
+typedef struct optimisation opt;
 
+/* PROTOTYPES */
+
+/* Methodes de calcul des valeurs propres*/
+opt methode_leverrier_base(int ordre, double **A, double *coefficients);
+opt methode_leverrier_amelioree(int ordre, double **A, double *coefficients);
+opt methode_puissance(int ordre, double **A, double *v, double e);
+
+/* Methodes de calcul et de traitement brut des matrices*/
 void generer_identite(double **A, int n);
 void copier_matrice(double **src, double **dest, int n);
 void puissance_matrice(double **A, int p, double **R, int n);
@@ -15,58 +27,71 @@ void additionner_matrices(double **A, double **B, double **R, int n);
 double calcule_norme(double *u, double *v, int ordre);
 double calcule_trace(double **A, int n);
 
+/* Methodes de gestion de mémoire et d'affichage des matrices*/
 double** allouer_memoire_matrice(int n);
 void liberer_memoire_matrice(int n, double **mat);
 void afficher_matrice(int n, double **mat);
 
 int main()
 {
-	double **A = allouer_memoire_matrice(3);
-	double **B = allouer_memoire_matrice(3);
-	//double **R = allouer_memoire_matrice(3);
+	int ordre = 2;
+	double e = pow(10, -5);
+
+	double **A = allouer_memoire_matrice(ordre);
+
+	// A[0][0] = 1;
+	// A[0][1] = 0;
+	// A[0][2] = 0;
+	// A[1][0] = 0;
+	// A[1][1] = 2;
+	// A[1][2] = 0;
+	// A[2][0] = 0;
+	// A[2][1] = 0;
+	// A[2][2] = 3;
 
 	A[0][0] = 1;
 	A[0][1] = 0;
-	A[0][2] = 0;
 	A[1][0] = 0;
 	A[1][1] = 2;
-	A[1][2] = 0;
-	A[2][0] = 0;
-	A[2][1] = 0;
-	A[2][2] = 3;
 
-	B[0][0] = 1;
-	B[0][1] = 0;
-	B[0][2] = 0;
-	B[1][0] = 0;
-	B[1][1] = 2;
-	B[1][2] = 0;
-	B[2][0] = 0;
-	B[2][1] = 0;
-	B[2][2] = 3;
+	/**/
+	double v[ordre];
+	opt mesure = {0, 0};
+	mesure = methode_puissance(ordre, A, v, e);
+	printf("Méthode des puissances : %ld clocks processeur, %ld octets alloués\n", mesure.nb_clocks, mesure.octets);
+	/**/
 
-	double coefficients[4];
+	/*
+	int i = 0;
+	double coefficients_base[ordre+1];
+	double coefficients_amelioree[ordre+1];
+	opt mesure_base = {0, 0};
+	opt mesure_amelioree = {0, 0};
+	mesure_base = methode_leverrier_base(ordre, A, coefficients_base);
+	mesure_amelioree = methode_leverrier_amelioree(ordre, A, coefficients_amelioree);
+	printf("Coefficients obtenus :\nPar la méthode de Leverrier de base (à gauche), et améliorée (à droite)\n");
+	for (i = 0; i < ordre+1; i++)
+	{
+		printf("%f\t", coefficients_base[i]);
+		printf("%f\n", coefficients_amelioree[i]);
+	}
+	printf("\n");
+	printf("Méthode de Leverrier de base : %ld clocks processeur, %ld octets alloués\n", mesure_base.nb_clocks, mesure_base.octets);
+	printf("Méthode de Leverrier améliorée : %ld clocks processeur, %ld octets alloués\n", mesure_amelioree.nb_clocks, mesure_amelioree.octets);
+	*/
 
-	// multiplier_matrices(A, B, R, 3);
-	// puissance_matrice(A, 3, R, 3);
-	methode_leverrier_amelioree(3, A, coefficients);
-
-	// afficher_matrice(3, A);
-	//afficher_matrice(3, R);
-
-	printf("%f\n", coefficients[0]);
-	printf("%f\n", coefficients[1]);
-	printf("%f\n", coefficients[2]);
-	printf("%f\n", coefficients[3]);
+	liberer_memoire_matrice(ordre, A);
 
 	return EXIT_SUCCESS;
 }
 
-void methode_leverrier_base(int ordre, double **A, double *coefficients)
+opt methode_leverrier_base(int ordre, double **A, double *coefficients)
 {
-	int i = 0;
-	int j = 0;
-	double **M = allouer_memoire_matrice(ordre);
+	opt mesure = {clock(), 0};
+
+	int i = 0;	mesure.octets += sizeof(int);
+	int j = 0;	mesure.octets += sizeof(int);
+	double **M = allouer_memoire_matrice(ordre); mesure.octets = mesure.octets + sizeof(double**) + ordre*sizeof(double*) + ordre*sizeof(double);
 
 	coefficients[0] = pow(-1, ordre);
 
@@ -80,16 +105,30 @@ void methode_leverrier_base(int ordre, double **A, double *coefficients)
 		}
 		coefficients[i] = -coefficients[i]/i;
 	}
+	/* octets alloués par la fonction puissance_matrice */
+	mesure.octets = mesure.octets + sizeof(double**) + ordre*sizeof(double*) + ordre*sizeof(double);
+	mesure.octets += 6*sizeof(int);
+
+	/* octets alloués par la fonction calcule_trace */
+	mesure.octets += sizeof(int);
+	mesure.octets += sizeof(double);
+	
+	liberer_memoire_matrice(ordre, M);
+
+	mesure.nb_clocks = clock() - mesure.nb_clocks;
+	return mesure;
 }
 
-void methode_leverrier_amelioree(int ordre, double **A, double *coefficients)
+opt methode_leverrier_amelioree(int ordre, double **A, double *coefficients)
 {
-	double **A_buffer = allouer_memoire_matrice(ordre);
+	opt mesure = {clock(), 0};
+
+	double **A_buffer = allouer_memoire_matrice(ordre); mesure.octets = mesure.octets + sizeof(double**) + ordre*sizeof(double*) + ordre*sizeof(double);
 	copier_matrice(A, A_buffer, ordre);
-	double **B_buffer = allouer_memoire_matrice(ordre);
+	double **B_buffer = allouer_memoire_matrice(ordre); mesure.octets = mesure.octets + sizeof(double**) + ordre*sizeof(double*) + ordre*sizeof(double);
 	generer_identite(B_buffer, ordre);
-	double **M_buffer = allouer_memoire_matrice(ordre);
-	int i = 0;
+	double **M_buffer = allouer_memoire_matrice(ordre); mesure.octets = mesure.octets + sizeof(double**) + ordre*sizeof(double*) + ordre*sizeof(double);
+	int i = 0; mesure.octets += sizeof(int);
 
 	coefficients[0] = pow(-1, ordre);
 
@@ -101,21 +140,40 @@ void methode_leverrier_amelioree(int ordre, double **A, double *coefficients)
 		multiplier_matrice_scalaire(M_buffer, -pow(-1, ordre+1)*coefficients[i], B_buffer, ordre);
 		additionner_matrices(A_buffer, B_buffer, B_buffer, ordre);
 	}
+	/* octets alloués par la fonction multiplier_matrices */
+	mesure.octets += 3*sizeof(int);
+
+	/* octets alloués par la fonction calcule_trace */
+	mesure.octets += sizeof(int);
+	mesure.octets += sizeof(double);
+
+	/* octets alloués par la fonction generer_identite */
+	mesure.octets += 2*sizeof(int);
+
+	/* octets alloués par la fonction multiplier_matrice_scalaire */
+	mesure.octets += 2*sizeof(int);
+
+	/* octets alloués par la fonction additionner_matrices */
+	mesure.octets += 2*sizeof(int);
+
+	liberer_memoire_matrice(ordre, A_buffer);
+	liberer_memoire_matrice(ordre, B_buffer);
+	liberer_memoire_matrice(ordre, M_buffer);
+
+	mesure.nb_clocks = clock() - mesure.nb_clocks;
+	return mesure;
 }
 
-void methode_puissance(int ordre, double **A, double *v, double e)
+opt methode_puissance(int ordre, double **A, double *v, double e)
 {
-	// Initialisation de v avec toutes les composantes à 0
-	double *v_ancien = calloc(ordre, sizeof(double));
-	int i = 0;
-	int j = 0;
-	double numerateur = 0;
-	double denominateur = 0;
+	opt mesure = {clock(), 0};
 
-	printf("%f\n", A[0][0]);
-	printf("%f\n", A[0][1]);
-	printf("%f\n", A[1][1]);
-	printf("%f\n", A[1][0]);
+	// Initialisation de v avec toutes les composantes à 0
+	double *v_ancien = calloc(ordre, sizeof(double)); mesure.octets = mesure.octets + sizeof(double*) + ordre*sizeof(double);
+	int i = 0; mesure.octets += sizeof(int);
+	int j = 0; mesure.octets += sizeof(int);
+	double numerateur = 0; mesure.octets += sizeof(double);
+	double denominateur = 0; mesure.octets += sizeof(double);
 
 	for (i = 0; i < ordre; i++)
 	{
@@ -138,17 +196,34 @@ void methode_puissance(int ordre, double **A, double *v, double e)
 			}
 		}
 
+		i = ordre-1;
+		while (v[i] == 0)		// Traitement du cas où la dernière composante est nulle
+		{
+			i--;
+		}
+
 		for (i = 0; i < ordre; i++)
 		{
 			v[i] = v[i]/v[ordre-1];
 		}
 	}
 
-	printf("Voici le vecteur propre associé à la plus grande valeur propre de la matrice\nfournie en argument :\n");
+	for (i = 0; i < ordre; i++)		// Test de la convergence
+	{
+		if (!finite(v[i]))
+		{
+			printf("La matrice n'admet pas de valeur propre maximale\n");
+			mesure.nb_clocks = clock() - mesure.nb_clocks;
+			return mesure;
+		}
+	}
+
+	printf("Voici le vecteur propre associé à la plus grande valeur propre de la matrice\nfournie en argument :\n\n");
 	for (i = 0; i < ordre; i++)
 	{
 		printf("%f\n", v[i]);
 	}
+	printf("\n");
 
 	for (i = 0; i < ordre; i++)
 	{
@@ -169,7 +244,10 @@ void methode_puissance(int ordre, double **A, double *v, double e)
 		denominateur += v[i] * v[i];
 	}
 
-	printf("Voici la plus grande valeur propre de la matrice\nfournie en argument : %f\n", numerateur/denominateur);
+	printf("Voici la plus grande valeur propre de la matrice fournie en argument :\n%f\n", numerateur/denominateur);
+
+	mesure.nb_clocks = clock() - mesure.nb_clocks;
+	return mesure;
 }
 
 void generer_identite(double **A, int n)

@@ -32,6 +32,19 @@ double** allouer_memoire_matrice(int n);
 void liberer_memoire_matrice(int n, double **mat);
 void afficher_matrice(int n, double **mat);
 
+/* Fonctions de génération de matrices types */
+double** generer_matrice_creuse(int n);
+double** generer_matrice_bord(int n);
+double** generer_matrice_ding_dong(int n);
+double** generer_matrice_de_franc(int n);
+double** generer_matrice_de_hilbert(int n);
+double** generer_matrice_kms(int n, double p);
+double** generer_matrice_de_lotkin(int n);
+double** generer_matrice_de_moler(int n);
+
+/* Fonction annexe */
+int min(int a, int b);
+
 int main()
 {
 	int ordre = 2;
@@ -426,5 +439,230 @@ void afficher_matrice(int n, double **mat)
 			printf("%f\t", mat[i][j]);
 		}
 		printf("\n");
+	}
+}
+
+double** generer_matrice_creuse(int n)
+{
+	double **mat;
+	int nb_valeurs = 0;
+	int i = 0;
+	int j = 0;
+	int x = 0;
+	double al = 0;
+
+	srand(time(NULL));
+
+	mat = allouer_memoire_matrice(n);
+	
+	nb_valeurs = (n*n*30)/100;
+	
+	for (x = 0 ; x < nb_valeurs ; x++)
+	{
+		i = rand() % n;
+		j = rand() % n;
+
+		if (mat[i][j] == 0)
+		{
+			al = (float)rand()/RAND_MAX;
+			al -= 0.5;
+			al *= M_PI;
+			al = tan(al);
+			mat[i][j] = al;
+		}
+		else
+		{
+			x--;
+		}
+	}
+	return mat;
+}
+
+double** generer_matrice_bord(int n)
+{
+	double **mat;
+	int i = 0;
+	int j = 0;
+	int x = 0;
+
+	srand(time(NULL));
+	x = (rand() % 2);
+
+	mat = allouer_memoire_matrice(n);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		mat[i][i] = 1;
+	}
+
+	if (x == 0)
+	{
+		for (j = 0 ; j < n ; j++)
+		{
+			mat[0][j] = pow(2, -j);
+			mat[j][0] = mat[0][j];
+		}
+	}
+	else
+	{
+		for (j = 0 ; j < n ; j++)
+		{
+			mat[n-1][j] = pow(2, n-j-1);
+			mat[j][n-1] = mat[n-1][j];
+		}
+	}
+
+	return mat;
+}
+
+double** generer_matrice_ding_dong(int n)
+{
+	double **mat;
+	int i = 0;
+	int j = 0;
+
+	mat = allouer_memoire_matrice(n);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		for(j = 0 ; j < n ; j++)
+		{
+			mat[i][j] = 1/(2*(n - i - j - 2 + 1.5));
+		}
+	}
+
+	return mat;
+}
+
+double** generer_matrice_de_franc(int n)
+{
+	double **mat;
+	int i = 0;
+	int j = 0;
+
+	mat = allouer_memoire_matrice(n);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		for(j = 0 ; j < n ; j++)
+		{
+			if (i >= j+2)
+			{
+				mat[i][j] = 0;
+			}
+			else
+			{
+				mat[i][j] = min(i+1, j+1);
+			}
+		}
+	}
+
+	return mat;
+}
+
+double** generer_matrice_de_hilbert(int n)
+{
+	double **mat;
+	int i = 0;
+	int j = 0;
+
+	mat = allouer_memoire_matrice(n);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		for(j = 0 ; j < n ; j++)
+		{
+			mat[i][j] = 1.0/(i + 1 + j);
+		}
+	}
+
+	return mat;
+}
+
+double** generer_matrice_kms(int n, double p)
+{
+	if (p <= 0 || p >= 1)
+	{
+		printf("Le paramètre passé en argument est erroné\n");
+		return NULL;
+	}
+
+	double **mat;
+	int i = 0;
+	int j = 0;
+
+	mat = allouer_memoire_matrice(n);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		for(j = 0 ; j < n ; j++)
+		{
+			mat[i][j] = pow(p, fabs(i-j));
+		}
+	}
+
+	return mat;
+}
+
+double** generer_matrice_de_lotkin(int n)
+{
+	double **mat;
+	int i = 0;
+	int j = 0;
+
+	mat = allouer_memoire_matrice(n);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		for(j = 0 ; j < n ; j++)
+		{
+			if (i == 0)
+			{
+				mat[0][j] = 1;
+			}
+			else
+			{
+				mat[i][j] = 1.0/(i + 1 + j);
+			}
+		}
+	}
+	return mat;
+}
+
+
+double** generer_matrice_de_moler(int n)
+{
+	double **mat;
+	int i = 0;
+	int j = 0;
+
+	mat = allouer_memoire_matrice(n);
+
+	for (i = 0 ; i < n ; i++)
+	{
+		for(j = 0 ; j < n ; j++)
+		{
+			if (i == j)
+			{
+				mat[i][j] = i+1;
+			}
+			else 
+			{
+				mat[i][j] = min(i+1 ,j+1) - 2;
+			}
+		}
+	}
+	return mat;
+}
+
+int min(int a, int b)
+{
+	if (a > b)
+	{
+		return b;
+	}
+	else
+	{
+		return a;
 	}
 }

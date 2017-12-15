@@ -47,34 +47,25 @@ int min(int a, int b);
 
 int main()
 {
-	int ordre = 2;
+	int ordre = 10;
 	double e = pow(10, -5);
 
-	double **A = allouer_memoire_matrice(ordre);
+	double **A = generer_matrice_de_moler(ordre);
 
 	// A[0][0] = 1;
 	// A[0][1] = 0;
-	// A[0][2] = 0;
 	// A[1][0] = 0;
 	// A[1][1] = 2;
-	// A[1][2] = 0;
-	// A[2][0] = 0;
-	// A[2][1] = 0;
-	// A[2][2] = 3;
 
-	A[0][0] = 1;
-	A[0][1] = 0;
-	A[1][0] = 0;
-	A[1][1] = 2;
+	// Ne pas modifier après ce commentaire !
 
-	/**/
 	double v[ordre];
 	opt mesure = {0, 0};
+	printf("Méthode des puissances :\n");
 	mesure = methode_puissance(ordre, A, v, e);
-	printf("Méthode des puissances : %ld clocks processeur, %ld octets alloués\n", mesure.nb_clocks, mesure.octets);
-	/**/
+	printf("Méthode des puissances : %ld clocks processeur, %ld octets alloués\n\n\n", mesure.nb_clocks, mesure.octets);
 
-	/*
+	
 	int i = 0;
 	double coefficients_base[ordre+1];
 	double coefficients_amelioree[ordre+1];
@@ -91,7 +82,6 @@ int main()
 	printf("\n");
 	printf("Méthode de Leverrier de base : %ld clocks processeur, %ld octets alloués\n", mesure_base.nb_clocks, mesure_base.octets);
 	printf("Méthode de Leverrier améliorée : %ld clocks processeur, %ld octets alloués\n", mesure_amelioree.nb_clocks, mesure_amelioree.octets);
-	*/
 
 	liberer_memoire_matrice(ordre, A);
 
